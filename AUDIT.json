@@ -2,12 +2,12 @@
     "schema_version": "1.0.0",
     "auditor_version": "1.0.0",
     "package": "alex-kassel/site-cloner",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "audit": {
-        "commit": "8336cbbecbbb495fe50c1444867734540253ed79",
-        "tree_hash": "9f26089358d9677364b6911fa414b4fcec3dddaf",
+        "commit": "46df5f300d05035da4e97fbf32aee8913699db23",
+        "tree_hash": "599fbb0553fd24b5c3561883236408fe4689c8dc",
         "branch": "main",
-        "timestamp": "2026-10-25T20:58:30+00:00",
+        "timestamp": "2026-10-25T22:02:54+00:00",
         "environment": {
             "php": "8.3.28",
             "laravel": "13.37.0",
@@ -20,42 +20,42 @@
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "packages/alex-kassel/site-cloner/composer.json is valid",
-            "duration_seconds": 0.234
+            "duration_seconds": 0.252
         },
         "pint": {
             "check": "pint",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "{\"tool\":\"pint\",\"result\":\"passed\"}",
-            "duration_seconds": 0.198
+            "duration_seconds": 0.2
         },
         "phpstan": {
             "check": "phpstan",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "{\"tool\":\"phpstan\",\"result\":\"passed\",\"errors\":0}",
-            "duration_seconds": 1.489
+            "duration_seconds": 1.508
         },
         "tests": {
             "check": "tests",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
-            "output": "{\"tool\":\"phpunit\",\"result\":\"passed\",\"tests\":17,\"passed\":17,\"assertions\":61,\"duration_ms\":10}",
-            "duration_seconds": 0.219
+            "output": "{\"tool\":\"phpunit\",\"result\":\"passed\",\"tests\":19,\"passed\":19,\"assertions\":65,\"duration_ms\":96}",
+            "duration_seconds": 0.329
         },
         "isolated": {
             "check": "isolated",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
-            "output": "PHPUnit 11.5.57 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.28\nConfiguration: /private/var/folders/px/ykxw69555z9_pgw_yyv14fxh0000gn/T/wdt-isolated-ce7d3904ab8cf9a16ea19f48/project/phpunit.xml\n\n.................                                                 17 / 17 (100%)\n\nTime: 00:00.011, Memory: 10.00 MB\n\nOK (17 tests, 61 assertions)\n",
-            "duration_seconds": 35.622
+            "output": "PHPUnit 11.5.57 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.28\nConfiguration: /private/var/folders/px/ykxw69555z9_pgw_yyv14fxh0000gn/T/wdt-isolated-ee89ed2a00987be86ec12705/project/phpunit.xml\n\n...................                                               19 / 19 (100%)\n\nTime: 00:00.075, Memory: 26.00 MB\n\nOK (19 tests, 65 assertions)\n",
+            "duration_seconds": 30.689
         },
         "git_cleanliness": {
             "check": "git_cleanliness",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "Git repository is clean. No uncommitted changes.",
-            "duration_seconds": 0.018
+            "duration_seconds": 0.019
         },
         "readme": {
             "check": "readme",
@@ -73,5 +73,5 @@
         }
     },
     "verdict": "PASSED",
-    "fingerprint": "sha256:7db2e07a6cede8e18c86bf69b8125d2cd226b833da7f1cda5744d231f74437d6"
+    "fingerprint": "sha256:b2763a1e3e4ca8ed5605ce4da0343a02bdac7760f779de79fe580ff2ab6b87cf"
 }
