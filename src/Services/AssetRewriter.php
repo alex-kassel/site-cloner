@@ -96,7 +96,7 @@ final class AssetRewriter
         $dom = new \DOMDocument;
         // Suppress HTML5 parsing warnings
         $internalErrors = libxml_use_internal_errors(true);
-        $encodedHtml = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        $encodedHtml = mb_encode_numericentity($html, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8');
         @$dom->loadHTML($encodedHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_use_internal_errors($internalErrors);
 
