@@ -11,6 +11,7 @@ $middleware = config('site-cloner.middleware', ['web']);
 
 Route::prefix($prefix)->middleware($middleware)->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('site-cloner.index');
+    Route::get('/locale/{locale}', [DashboardController::class, 'setLocale'])->name('site-cloner.locale');
     Route::post('/check', [DashboardController::class, 'check'])->name('site-cloner.check');
     Route::post('/start', [DashboardController::class, 'start'])->name('site-cloner.start');
     Route::get('/status/{siteId}', [DashboardController::class, 'status'])->name('site-cloner.status');

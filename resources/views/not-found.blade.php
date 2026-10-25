@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Файл не найден — Site Cloner</title>
+    <title>{{ __('site-cloner::common.not_found.title') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
@@ -13,14 +13,14 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
         </div>
-        <h1 class="text-xl font-bold text-white mb-2">Файл не найден в архиве</h1>
+        <h1 class="text-xl font-bold text-white mb-2">{{ __('site-cloner::common.not_found.heading') }}</h1>
         <p class="text-sm text-slate-400 mb-4">
-            Запрошенный файл <code class="text-amber-300 bg-slate-900/60 px-1.5 py-0.5 rounded text-xs break-all">{{ $path }}</code> отсутствует в скачанной копии сайта.
+            {{ __('site-cloner::common.not_found.message', ['path' => $path]) }}
         </p>
 
         @if($manifest && !empty($manifest->pages))
             <div class="mb-6 text-left bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 max-h-40 overflow-y-auto">
-                <span class="text-xs uppercase font-semibold text-slate-400 block mb-2">Доступные страницы сайта:</span>
+                <span class="text-xs uppercase font-semibold text-slate-400 block mb-2">{{ __('site-cloner::common.not_found.available_pages') }}</span>
                 <ul class="text-xs space-y-1.5">
                     @foreach($manifest->pages as $page)
                         <li>
@@ -36,10 +36,10 @@
 
         <div class="flex items-center justify-center gap-3">
             <a href="{{ route('site-cloner.view', ['siteId' => $siteId]) }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-indigo-600/20">
-                На главную страницу сайта
+                {{ __('site-cloner::common.not_found.btn_home') }}
             </a>
             <a href="{{ route('site-cloner.index') }}" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-sm font-medium transition">
-                В дашборд
+                {{ __('site-cloner::common.not_found.btn_dashboard') }}
             </a>
         </div>
     </div>

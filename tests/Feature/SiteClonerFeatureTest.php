@@ -15,7 +15,25 @@ final class SiteClonerFeatureTest extends TestCase
         $response = $this->get('/site-cloner');
         $response->assertStatus(200);
         $response->assertSee('Site Cloner');
-        $response->assertSee('Клонировать новый сайт');
+        $response->assertSee('Clone Website or Template Demo');
+    }
+
+    public function test_locale_switcher_changes_language(): void
+    {
+        // Switch to German
+        $deResponse = $this->withSession(['site_cloner_locale' => 'de'])->get('/site-cloner');
+        $deResponse->assertStatus(200);
+        $deResponse->assertSee('Website oder Demo-Template herunterladen');
+
+        // Switch to Russian
+        $ruResponse = $this->withSession(['site_cloner_locale' => 'ru'])->get('/site-cloner');
+        $ruResponse->assertStatus(200);
+        $ruResponse->assertSee('Скачать сайт или демо-шаблон');
+
+        // Switch to English default
+        $enResponse = $this->withSession(['site_cloner_locale' => 'en'])->get('/site-cloner');
+        $enResponse->assertStatus(200);
+        $enResponse->assertSee('Clone Website or Template Demo');
     }
 
     public function test_check_endpoint_identifies_existing_sites(): void
@@ -71,6 +89,6 @@ final class SiteClonerFeatureTest extends TestCase
         // Test not found
         $notFoundRes = $this->get('/site-cloner/view/'.$siteId.'/missing-page.html');
         $notFoundRes->assertStatus(404);
-        $this->assertStringContainsString('Файл не найден в архиве', $notFoundRes->getContent() ?: '');
+        $this->assertStringContainsString('File not found in archive', $notFoundRes->getContent() ?: '');
     }
 }

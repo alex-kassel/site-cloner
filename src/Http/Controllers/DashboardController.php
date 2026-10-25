@@ -12,6 +12,7 @@ use AlexKassel\SiteCloner\Services\SiteStorage;
 use AlexKassel\SiteCloner\Services\UrlNormalizer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -25,8 +26,10 @@ final class DashboardController
         private SiteClonerEngine $engine,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $this->applyLocale($request);
+
         $sites = $this->storage->allSites();
         $totalBytes = array_sum(array_map(static fn (SiteManifest $s): int => $s->totalBytes, $sites));
 
@@ -43,7 +46,27 @@ final class DashboardController
             'totalSites' => count($sites),
             'totalSizeFormatted' => $totalSizeFormatted,
             'routePrefix' => config('site-cloner.route_prefix', 'site-cloner'),
+            'currentLocale' => app()->getLocale(),
         ]);
+    }
+
+    public function setLocale(string $locale): RedirectResponse
+    {
+        if (in_array($locale, ['en', 'de', 'ru'], true)) {
+            session(['site_cloner_locale' => $locale]);
+            app()->setLocale($locale);
+        }
+
+        return redirect()->back();
+    }
+
+    private function applyLocale(Request $request): void
+    {
+        $locale = (string) $request->query('lang', session('site_cloner_locale', 'en'));
+        if (in_array($locale, ['en', 'de', 'ru'], true)) {
+            session(['site_cloner_locale' => $locale]);
+            app()->setLocale($locale);
+        }
     }
 
     public function check(Request $request): JsonResponse
@@ -66,11 +89,13 @@ final class DashboardController
 
     public function start(Request $request): JsonResponse
     {
+        $this->applyLocale($request);
+
         $url = trim((string) $request->input('url', ''));
         $force = (bool) $request->input('force', false);
 
         if ($url === '' || filter_var($url, FILTER_VALIDATE_URL) === false) {
-            return response()->json(['error' => 'Пожалуйста, введите корректный URL (например, https://example.com/demo/)'], 422);
+            return response()->json(['error' => __('site-cloner::api.invalid_url')], 422);
         }
 
         $id = $this->slugGenerator->generate($url);
@@ -79,7 +104,7 @@ final class DashboardController
             return response()->json([
                 'exists' => true,
                 'id' => $id,
-                'message' => 'Этот сайт уже был скачан ранее.',
+                'message' => __('site-cloner::api.already_downloaded'),
                 'manifest' => $this->storage->getManifest($id)?->toArray(),
             ], 409);
         }
@@ -138,7 +163,7 @@ final class DashboardController
 
             $manifest = $this->storage->getManifest($siteId);
             if ($manifest === null) {
-                echo "event: error\ndata: ".json_encode(['error' => 'Сайт не найден'])."\n\n";
+                echo "event: error\ndata: ".json_encode(['error' => __('site-cloner::api.site_not_found')])."\n\n";
                 flush();
 
                 return;
@@ -185,7 +210,7 @@ final class DashboardController
     {
         $manifest = $this->storage->getManifest($siteId);
         if ($manifest === null) {
-            return response()->json(['error' => 'Сайт не найден'], 404);
+            return response()->json(['error' => __('site-cloner::api.site_not_found')], 404);
         }
 
         return response()->json($manifest->toArray());
@@ -193,9 +218,11 @@ final class DashboardController
 
     public function resources(string $siteId, Request $request, ResourceInspector $inspector): JsonResponse
     {
+        $this->applyLocale($request);
+
         $manifest = $this->storage->getManifest($siteId);
         if ($manifest === null) {
-            return response()->json(['error' => 'Сайт не найден'], 404);
+            return response()->json(['error' => __('site-cloner::api.site_not_found')], 404);
         }
 
         $refresh = (bool) $request->input('refresh', false);
@@ -218,16 +245,18 @@ final class DashboardController
         ]);
     }
 
-    public function export(string $siteId): BinaryFileResponse|JsonResponse
+    public function export(string $siteId, Request $request): BinaryFileResponse|JsonResponse
     {
+        $this->applyLocale($request);
+
         $manifest = $this->storage->getManifest($siteId);
         if ($manifest === null) {
-            return response()->json(['error' => 'Сайт не найден'], 404);
+            return response()->json(['error' => __('site-cloner::api.site_not_found')], 404);
         }
 
         $zipPath = $this->storage->createZip($siteId);
         if ($zipPath === null || ! file_exists($zipPath)) {
-            return response()->json(['error' => 'Не удалось создать ZIP архив'], 500);
+            return response()->json(['error' => __('site-cloner::api.zip_failed')], 500);
         }
 
         return response()->download($zipPath, $siteId.'.zip', [

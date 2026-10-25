@@ -86,14 +86,14 @@ final class ResourceInspector
                     $domainMap[$domainName] = [
                         'domain' => $domainName,
                         'status' => 'downloaded',
-                        'status_label' => 'Скачано локально (офлайн)',
+                        'status_label' => __('Downloaded locally (offline)'),
                         'count' => 0,
                         'types' => [],
                         'urls' => [],
                     ];
                 } else {
                     $domainMap[$domainName]['status'] = 'downloaded';
-                    $domainMap[$domainName]['status_label'] = 'Скачано локально (офлайн)';
+                    $domainMap[$domainName]['status_label'] = __('Downloaded locally (offline)');
                 }
 
                 // Count files in domain directory
@@ -178,7 +178,7 @@ final class ResourceInspector
             foreach ($matches as $match) {
                 $domain = strtolower($match[1]);
                 $path = $match[2];
-                $this->registerResource($domainMap, $domain, 'downloaded', 'Скачано локально (офлайн)', $path);
+                $this->registerResource($domainMap, $domain, 'downloaded', $this->trans('site-cloner::api.resource_types.downloaded_label', 'Downloaded locally (offline)'), $path);
             }
         }
 
@@ -188,7 +188,7 @@ final class ResourceInspector
                 $fullUrl = $match[1];
                 $domain = strtolower($match[2]);
                 if (! str_contains($fullUrl, '/_external/')) {
-                    $this->registerResource($domainMap, $domain, 'external', 'Внешний CDN (живая ссылка)', $fullUrl);
+                    $this->registerResource($domainMap, $domain, 'external', $this->trans('site-cloner::api.resource_types.external_label', 'External CDN (online)'), $fullUrl);
                 }
             }
         }
@@ -198,7 +198,7 @@ final class ResourceInspector
             foreach ($matches as $match) {
                 $fullUrl = $match[1];
                 $domain = strtolower($match[2]);
-                $this->registerResource($domainMap, $domain, 'deactivated', 'Внешняя ссылка (заблокирована)', $fullUrl);
+                $this->registerResource($domainMap, $domain, 'deactivated', $this->trans('site-cloner::api.resource_types.deactivated_label', 'Uncloned section (deactivated)'), $fullUrl);
             }
         }
     }
@@ -236,44 +236,49 @@ final class ResourceInspector
     private function detectType(string $urlOrPath, string $status): string
     {
         if ($status === 'deactivated') {
-            return 'Внешняя ссылка';
+            return $this->trans('site-cloner::api.resource_types.external_links', 'External Links');
         }
 
         $path = strtolower((string) parse_url($urlOrPath, PHP_URL_PATH));
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
         if (in_array($ext, ['js', 'mjs', 'cjs'], true) || str_contains($path, '.js') || str_contains($path, 'script') || str_contains($path, 'beacon')) {
-            return 'JavaScript';
+            return $this->trans('site-cloner::api.resource_types.javascript', 'JavaScript');
         }
 
         if ($ext === 'css' || str_contains($path, '/css') || str_contains($path, 'style')) {
-            return 'CSS';
+            return $this->trans('site-cloner::api.resource_types.css', 'CSS');
         }
 
         if (in_array($ext, ['woff', 'woff2', 'ttf', 'eot', 'otf'], true) || str_contains($path, 'font')) {
-            return 'Шрифты';
+            return $this->trans('site-cloner::api.resource_types.fonts', 'Fonts');
         }
 
         if (in_array($ext, ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ico', 'avif'], true) || str_contains($path, 'image') || str_contains($path, 'avatar')) {
-            return 'Изображения';
+            return $this->trans('site-cloner::api.resource_types.images', 'Images');
         }
 
         if (in_array($ext, ['mp4', 'webm', 'ogg', 'mp3', 'wav'], true)) {
-            return 'Медиа';
+            return $this->trans('site-cloner::api.resource_types.media', 'Media');
         }
 
-        return 'Прочее';
+        return $this->trans('site-cloner::api.resource_types.other', 'Other');
     }
 
     private function extensionToType(string $ext): string
     {
         return match ($ext) {
-            'js', 'mjs', 'cjs' => 'JavaScript',
-            'css' => 'CSS',
-            'woff', 'woff2', 'ttf', 'eot', 'otf' => 'Шрифты',
-            'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ico', 'avif' => 'Изображения',
-            'mp4', 'webm', 'ogg', 'mp3', 'wav' => 'Медиа',
-            default => 'Прочее',
+            'js', 'mjs', 'cjs' => $this->trans('site-cloner::api.resource_types.javascript', 'JavaScript'),
+            'css' => $this->trans('site-cloner::api.resource_types.css', 'CSS'),
+            'woff', 'woff2', 'ttf', 'eot', 'otf' => $this->trans('site-cloner::api.resource_types.fonts', 'Fonts'),
+            'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ico', 'avif' => $this->trans('site-cloner::api.resource_types.images', 'Images'),
+            'mp4', 'webm', 'ogg', 'mp3', 'wav' => $this->trans('site-cloner::api.resource_types.media', 'Media'),
+            default => $this->trans('site-cloner::api.resource_types.other', 'Other'),
         };
+    }
+
+    private function trans(string $key, string $default): string
+    {
+        return function_exists('app') && app()->bound('translator') ? __($key) : $default;
     }
 }

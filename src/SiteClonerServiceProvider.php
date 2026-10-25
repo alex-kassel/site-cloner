@@ -52,6 +52,7 @@ class SiteClonerServiceProvider extends ServiceProvider
     {
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'site-cloner');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'site-cloner');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
@@ -61,6 +62,10 @@ class SiteClonerServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../resources/views' => resource_path('views/vendor/site-cloner'),
             ], 'site-cloner-views');
+
+            $this->publishes([
+                __DIR__.'/../resources/lang' => $this->app->langPath('vendor/site-cloner'),
+            ], 'site-cloner-translations');
 
             $skillsSource = is_dir(__DIR__.'/../resources/boost/skills')
                 ? __DIR__.'/../resources/boost/skills'

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Site Cloner — Локальный архив сайтов</title>
+    <title>{{ __('site-cloner::common.title') }}</title>
 
     <!-- Google Fonts: Space Grotesk & Inter (Horizon Style) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,31 +75,44 @@
 
     <!-- Top Navigation (Generous, crisp Horizon header) -->
     <header class="border-b border-sand-200 bg-white/95 sticky top-0 z-40 backdrop-blur shadow-sm">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3.5">
-                <a href="{{ route('site-cloner.index') }}" class="flex items-center gap-2.5 group">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5 min-w-0">
+                <a href="{{ route('site-cloner.index') }}" class="flex items-center gap-2.5 group shrink-0">
                     <span class="w-3.5 h-3.5 rounded-full bg-brand group-hover:scale-125 transition-transform"></span>
-                    <span class="text-2xl font-bold font-heading text-ink-900 tracking-tight">Site Cloner</span>
+                    <span class="text-2xl font-bold font-heading text-ink-900 tracking-tight">{{ __('site-cloner::common.app_name') }}</span>
                 </a>
-                <span class="text-sm text-sand-300 select-none">/</span>
-                <span class="text-sm text-ink-400 font-medium">Локальный архив сайтов</span>
+                <span class="text-sm text-sand-300 select-none hidden sm:inline">/</span>
+                <span class="text-sm text-ink-400 font-medium truncate hidden sm:inline">{{ __('site-cloner::common.app_subtitle') }}</span>
             </div>
 
-            <!-- Stats Bar -->
-            <div class="flex items-center gap-6 text-sm">
+            <!-- Stats Bar & Language Switcher -->
+            <div class="flex items-center gap-4 sm:gap-6 text-sm flex-wrap justify-end">
                 <div class="flex items-baseline gap-2">
-                    <span class="text-ink-400">Сайтов:</span>
+                    <span class="text-ink-400">{{ __('site-cloner::common.stats_sites') }}</span>
                     <span class="font-bold text-ink-900 font-heading text-lg" x-text="sites.length"></span>
                 </div>
-                <div class="w-px h-4 bg-sand-200"></div>
+                <div class="w-px h-4 bg-sand-200 hidden sm:block"></div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-ink-400">Объем:</span>
+                    <span class="text-ink-400">{{ __('site-cloner::common.stats_storage') }}</span>
                     <span class="font-bold text-brand font-heading text-lg" x-text="totalSizeFormatted"></span>
                 </div>
-                <div class="w-px h-4 bg-sand-200"></div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-ink-400">Файлов:</span>
+                <div class="w-px h-4 bg-sand-200 hidden md:block"></div>
+                <div class="hidden md:flex items-baseline gap-2">
+                    <span class="text-ink-400">{{ __('site-cloner::common.stats_files') }}</span>
                     <span class="font-bold text-ink-900 font-heading text-lg" x-text="totalFilesCount"></span>
+                </div>
+                <div class="w-px h-5 bg-sand-200"></div>
+
+                <!-- Language Switcher: EN | DE | RU -->
+                <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-400">
+                    <a href="{{ route('site-cloner.locale', 'en') }}"
+                       class="px-2 py-1 rounded-md transition {{ app()->getLocale() === 'en' ? 'bg-sand-200 text-ink-900 font-bold' : 'hover:text-ink-900' }}">EN</a>
+                    <span class="text-sand-300">|</span>
+                    <a href="{{ route('site-cloner.locale', 'de') }}"
+                       class="px-2 py-1 rounded-md transition {{ app()->getLocale() === 'de' ? 'bg-sand-200 text-ink-900 font-bold' : 'hover:text-ink-900' }}">DE</a>
+                    <span class="text-sand-300">|</span>
+                    <a href="{{ route('site-cloner.locale', 'ru') }}"
+                       class="px-2 py-1 rounded-md transition {{ app()->getLocale() === 'ru' ? 'bg-sand-200 text-ink-900 font-bold' : 'hover:text-ink-900' }}">RU</a>
                 </div>
             </div>
         </div>
@@ -112,14 +125,14 @@
             <div class="max-w-3xl space-y-4">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand text-xs sm:text-sm font-heading font-semibold">
                     <span class="w-2 h-2 rounded-full bg-brand"></span>
-                    <span>Автономное клонирование веб-шаблонов</span>
+                    <span>{{ __('site-cloner::workbench.badge') }}</span>
                 </div>
 
                 <h1 class="text-3xl sm:text-4xl font-bold font-heading text-ink-900 tracking-tight leading-tight">
-                    Скачать сайт или демо-шаблон
+                    {{ __('site-cloner::workbench.title') }}
                 </h1>
                 <p class="text-base sm:text-lg text-ink-600 leading-relaxed">
-                    Введите URL страницы или каталога. Движок полностью скачает все HTML-страницы внутри этого пути, подтянет стили, JavaScript, иконки и шрифты для автономной работы офлайн.
+                    {{ __('site-cloner::workbench.description') }}
                 </p>
 
                 <form @submit.prevent="submitUrl()" class="pt-2 space-y-4">
@@ -142,50 +155,50 @@
                             <svg x-show="!isSubmitting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            <span x-text="isSubmitting ? 'Проверка...' : 'Скачать сайт'"></span>
+                            <span x-text="isSubmitting ? translations.checking : translations.cloneWebsite"></span>
                         </button>
                     </div>
 
                     <!-- Mode Selector -->
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-sand-200">
                         <div class="flex items-center gap-2.5 shrink-0">
-                            <span class="text-xs font-semibold text-ink-500 uppercase tracking-wider">Режим:</span>
+                            <span class="text-xs font-semibold text-ink-500 uppercase tracking-wider">{{ __('site-cloner::workbench.mode_label') }}</span>
                             <div class="inline-flex items-center p-1 bg-sand-100 rounded-xl shrink-0">
                                 <button type="button"
                                         @click="downloadMode = 'light'"
                                         :class="downloadMode === 'light' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
                                         class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                                     <span class="shrink-0 text-sm">⚡</span>
-                                    <span class="whitespace-nowrap">Лёгкий</span>
+                                    <span class="whitespace-nowrap">{{ __('site-cloner::workbench.mode_light') }}</span>
                                 </button>
                                 <button type="button"
                                         @click="downloadMode = 'full'"
                                         :class="downloadMode === 'full' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
                                         class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                                     <span class="shrink-0 text-sm">✈️</span>
-                                    <span class="whitespace-nowrap">Полный</span>
+                                    <span class="whitespace-nowrap">{{ __('site-cloner::workbench.mode_full') }}</span>
                                 </button>
                             </div>
                         </div>
                         <div class="text-xs text-ink-500">
-                            <span x-show="downloadMode === 'light'">⚡ <strong>Легкий (быстро):</strong> чистый код шаблона, внешние CDN остаются оригинальными ссылками.</span>
-                            <span x-show="downloadMode === 'full'">✈️ <strong>Полный (100% офлайн):</strong> все внешние библиотеки и картинки скачиваются локально.</span>
+                            <span x-show="downloadMode === 'light'">⚡ <strong>{{ __('site-cloner::workbench.mode_light_desc_prefix') }}</strong> {{ __('site-cloner::workbench.mode_light_desc') }}</span>
+                            <span x-show="downloadMode === 'full'">✈️ <strong>{{ __('site-cloner::workbench.mode_full_desc_prefix') }}</strong> {{ __('site-cloner::workbench.mode_full_desc') }}</span>
                         </div>
                     </div>
 
-                    <!-- Clean helper notes -->
+                    <!-- Helper notes -->
                     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-600 pt-1">
                         <span class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            Строго внутри указанного пути
+                            {{ __('site-cloner::workbench.note_scope') }}
                         </span>
                         <span class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-brand"></span>
-                            Шрифты и ассеты скачиваются полностью
+                            {{ __('site-cloner::workbench.note_assets') }}
                         </span>
                         <span class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                            Внешние ссылки за пределы пути деактивируются
+                            {{ __('site-cloner::workbench.note_links') }}
                         </span>
                     </div>
                 </form>
@@ -197,9 +210,9 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-sand-200 pb-4">
                 <div>
                     <h2 class="text-2xl font-bold font-heading text-ink-900">
-                        Архив сайтов
+                        {{ __('site-cloner::archive.title') }}
                     </h2>
-                    <p class="text-sm text-ink-400">Сохраненные локальные копии сайтов</p>
+                    <p class="text-sm text-ink-400">{{ __('site-cloner::archive.subtitle') }}</p>
                 </div>
 
                 <div class="flex items-center gap-2.5 w-full sm:w-auto">
@@ -207,15 +220,15 @@
                     <div class="relative flex-1 sm:w-56">
                         <input type="text"
                                x-model="searchQuery"
-                               placeholder="Поиск по сайтам..."
+                               placeholder="{{ __('site-cloner::archive.search_placeholder') }}"
                                class="w-full bg-white border border-sand-300 rounded-xl px-3.5 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-100">
                     </div>
 
                     <!-- Sort -->
                     <select x-model="sortBy" class="bg-white border border-sand-300 rounded-xl px-3 py-2 text-sm text-ink-600 focus:outline-none focus:border-brand">
-                        <option value="latest">По дате</option>
-                        <option value="size">По размеру</option>
-                        <option value="name">По имени</option>
+                        <option value="latest">{{ __('site-cloner::archive.sort_latest') }}</option>
+                        <option value="size">{{ __('site-cloner::archive.sort_size') }}</option>
+                        <option value="name">{{ __('site-cloner::archive.sort_name') }}</option>
                     </select>
 
                     <!-- Grid / List Switcher -->
@@ -224,7 +237,7 @@
                                 @click="viewMode = 'grid'"
                                 :class="viewMode === 'grid' ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-400 hover:text-ink-700'"
                                 class="p-2 rounded-lg transition"
-                                title="Сетка">
+                                title="{{ __('site-cloner::archive.view_grid') }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                             </svg>
@@ -233,7 +246,7 @@
                                 @click="viewMode = 'list'"
                                 :class="viewMode === 'list' ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-400 hover:text-ink-700'"
                                 class="p-2 rounded-lg transition"
-                                title="Список">
+                                title="{{ __('site-cloner::archive.view_list') }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                             </svg>
@@ -245,8 +258,8 @@
             <!-- Empty Archive -->
             <template x-if="filteredSites.length === 0">
                 <div class="bg-white border border-sand-200 rounded-2xl p-14 text-center space-y-2 shadow-sm">
-                    <p class="text-base font-semibold font-heading text-ink-900">В архиве пока нет сайтов</p>
-                    <p class="text-sm text-ink-400">Вставьте адрес сайта в форму выше, чтобы сохранить локальную копию.</p>
+                    <p class="text-base font-semibold font-heading text-ink-900">{{ __('site-cloner::archive.empty_title') }}</p>
+                    <p class="text-sm text-ink-400">{{ __('site-cloner::archive.empty_desc') }}</p>
                 </div>
             </template>
 
@@ -265,24 +278,24 @@
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <span class="text-xs px-2.5 py-1 rounded-full font-semibold border"
                                           :class="site.download_mode === 'full' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-                                          x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Лёгкий'">
+                                          x-text="site.download_mode === 'full' ? '✈️ ' + translations.modeFull : '⚡ ' + translations.modeLight">
                                     </span>
 
                                     <!-- Status Badge -->
                                     <template x-if="site.status === 'downloading'">
                                         <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse flex items-center gap-1.5">
                                             <span class="w-1.5 h-1.5 rounded-full bg-brand animate-ping"></span>
-                                            <span>Загрузка...</span>
+                                            <span>{{ __('site-cloner::archive.status_downloading') }}</span>
                                         </span>
                                     </template>
                                     <template x-if="site.status === 'completed'">
                                         <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            Готов
+                                            {{ __('site-cloner::archive.status_ready') }}
                                         </span>
                                     </template>
                                     <template x-if="site.status === 'failed'">
                                         <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                            Ошибка
+                                            {{ __('site-cloner::archive.status_error') }}
                                         </span>
                                     </template>
                                 </div>
@@ -291,15 +304,15 @@
                             <!-- Metrics row with guaranteed single-line sizes -->
                             <div class="grid grid-cols-3 gap-2 bg-sand-50 p-3 rounded-xl border border-sand-200 text-center">
                                 <div class="min-w-0">
-                                    <span class="text-xs text-ink-400 block font-medium">Размер</span>
+                                    <span class="text-xs text-ink-400 block font-medium">{{ __('site-cloner::archive.card_size') }}</span>
                                     <span class="text-xs sm:text-sm font-bold font-mono text-brand whitespace-nowrap truncate block" x-text="site.human_size || '0 B'"></span>
                                 </div>
                                 <div class="min-w-0">
-                                    <span class="text-xs text-ink-400 block font-medium">Файлов</span>
+                                    <span class="text-xs text-ink-400 block font-medium">{{ __('site-cloner::archive.card_files') }}</span>
                                     <span class="text-xs sm:text-sm font-bold font-mono text-ink-900 whitespace-nowrap truncate block" x-text="site.files_count || 0"></span>
                                 </div>
                                 <div class="min-w-0">
-                                    <span class="text-xs text-ink-400 block font-medium">Страниц</span>
+                                    <span class="text-xs text-ink-400 block font-medium">{{ __('site-cloner::archive.card_pages') }}</span>
                                     <span class="text-xs sm:text-sm font-bold font-mono text-emerald-700 whitespace-nowrap truncate block" x-text="site.pages_count || 0"></span>
                                 </div>
                             </div>
@@ -307,14 +320,14 @@
                             <!-- Live file ticker while downloading, or completed date -->
                             <template x-if="site.status === 'downloading'">
                                 <div class="flex items-center justify-between text-xs bg-sand-100/70 px-3 py-2 rounded-xl border border-sand-200">
-                                    <span class="text-ink-600 font-mono truncate mr-2" x-text="site.current_file || 'Инициализация...' "></span>
+                                    <span class="text-ink-600 font-mono truncate mr-2" x-text="site.current_file || translations.initializing"></span>
                                     <span class="font-mono text-ink-900 font-bold shrink-0" x-text="formatSeconds(site.elapsed_seconds)"></span>
                                 </div>
                             </template>
                             <template x-if="site.status !== 'downloading'">
                                 <div class="text-xs sm:text-sm text-ink-400 flex items-center justify-between">
-                                    <span>Скачан:</span>
-                                    <span class="font-mono text-ink-600" x-text="site.completed_at || site.started_at || 'неизвестно'"></span>
+                                    <span>{{ __('site-cloner::archive.card_cloned') }}</span>
+                                    <span class="font-mono text-ink-600" x-text="site.completed_at || site.started_at || translations.unknown"></span>
                                 </div>
                             </template>
                         </div>
@@ -327,7 +340,7 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
-                                    <span>Скачивание (<span x-text="formatSeconds(site.elapsed_seconds)"></span>)...</span>
+                                    <span>{{ __('site-cloner::archive.cloning_ticker') }} (<span x-text="formatSeconds(site.elapsed_seconds)"></span>)...</span>
                                 </button>
                             </div>
                         </template>
@@ -337,7 +350,7 @@
                                 <!-- Open in viewer -->
                                 <a :href="'/' + routePrefix + '/view/' + site.id + '/'" target="_blank"
                                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
-                                    <span>Открыть сайт</span>
+                                    <span>{{ __('site-cloner::archive.btn_open') }}</span>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                     </svg>
@@ -349,8 +362,8 @@
                                             @click="openOptions = !openOptions"
                                             @click.away="openOptions = false"
                                             class="px-3.5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0"
-                                            title="Опции сайта">
-                                        <span>Опции</span>
+                                            title="{{ __('site-cloner::archive.options_title') }}">
+                                        <span>{{ __('site-cloner::archive.btn_options') }}</span>
                                         <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                         </svg>
@@ -373,7 +386,7 @@
                                             <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                             </svg>
-                                            <span>Страницы сайта</span>
+                                            <span>{{ __('site-cloner::archive.opt_pages') }}</span>
                                         </button>
 
                                         <button type="button"
@@ -382,7 +395,7 @@
                                             <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                                             </svg>
-                                            <span>Ресурсы и CDN</span>
+                                            <span>{{ __('site-cloner::archive.opt_resources') }}</span>
                                         </button>
 
                                         <a :href="'/' + routePrefix + '/export/' + site.id"
@@ -391,7 +404,7 @@
                                             <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                             </svg>
-                                            <span>Скачать ZIP</span>
+                                            <span>{{ __('site-cloner::archive.opt_download_zip') }}</span>
                                         </a>
 
                                         <div class="border-t border-sand-100 my-1"></div>
@@ -402,7 +415,7 @@
                                             <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
-                                            <span>Удалить сайт</span>
+                                            <span>{{ __('site-cloner::archive.opt_delete') }}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -411,8 +424,8 @@
 
                         <template x-if="site.status === 'failed'">
                             <div class="pt-3.5 border-t border-sand-200 flex items-center justify-between">
-                                <span class="text-xs text-rose-600 font-medium truncate" x-text="site.error_message || 'Ошибка загрузки'"></span>
-                                <button type="button" @click="confirmDelete(site)" class="text-xs text-rose-600 hover:underline">Удалить</button>
+                                <span class="text-xs text-rose-600 font-medium truncate" x-text="site.error_message || translations.downloadError"></span>
+                                <button type="button" @click="confirmDelete(site)" class="text-xs text-rose-600 hover:underline">{{ __('site-cloner::archive.btn_delete') }}</button>
                             </div>
                         </template>
                     </div>
@@ -429,23 +442,23 @@
                                 <h3 class="text-base font-bold font-heading text-ink-900 truncate" :title="site.id" x-text="site.id"></h3>
                                 <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold border shrink-0"
                                       :class="site.download_mode === 'full' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-                                      x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Лёгкий'">
+                                      x-text="site.download_mode === 'full' ? '✈️ ' + translations.modeFull : '⚡ ' + translations.modeLight">
                                 </span>
 
                                 <template x-if="site.status === 'downloading'">
                                     <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse flex items-center gap-1.5">
                                         <span class="w-1.5 h-1.5 rounded-full bg-brand animate-ping"></span>
-                                        <span>Загрузка...</span>
+                                        <span>{{ __('site-cloner::archive.status_downloading') }}</span>
                                     </span>
                                 </template>
                                 <template x-if="site.status === 'completed'">
                                     <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                        Готов
+                                        {{ __('site-cloner::archive.status_ready') }}
                                     </span>
                                 </template>
                                 <template x-if="site.status === 'failed'">
                                     <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
-                                        Ошибка
+                                        {{ __('site-cloner::archive.status_error') }}
                                     </span>
                                 </template>
                             </div>
@@ -455,19 +468,19 @@
                         <!-- List metrics -->
                         <div class="flex items-center gap-4 sm:gap-6 text-sm shrink-0">
                             <div>
-                                <span class="text-xs text-ink-400 block font-medium">Размер</span>
+                                <span class="text-xs text-ink-400 block font-medium">{{ __('site-cloner::archive.card_size') }}</span>
                                 <span class="font-mono font-bold text-brand whitespace-nowrap" x-text="site.human_size || '0 B'"></span>
                             </div>
                             <div>
-                                <span class="text-xs text-ink-400 block font-medium">Файлов</span>
+                                <span class="text-xs text-ink-400 block font-medium">{{ __('site-cloner::archive.card_files') }}</span>
                                 <span class="font-mono font-bold text-ink-900 whitespace-nowrap" x-text="site.files_count || 0"></span>
                             </div>
                             <div>
-                                <span class="text-xs text-ink-400 block font-medium">Страниц</span>
+                                <span class="text-xs text-ink-400 block font-medium">{{ __('site-cloner::archive.card_pages') }}</span>
                                 <span class="font-mono font-bold text-emerald-700 whitespace-nowrap" x-text="site.pages_count || 0"></span>
                             </div>
                             <div class="hidden sm:block">
-                                <span class="text-xs text-ink-400 block font-medium" x-text="site.status === 'downloading' ? 'Таймер' : 'Скачан'"></span>
+                                <span class="text-xs text-ink-400 block font-medium" x-text="site.status === 'downloading' ? translations.timer : translations.cloned"></span>
                                 <span class="font-mono text-xs text-ink-600 whitespace-nowrap" x-text="site.status === 'downloading' ? formatSeconds(site.elapsed_seconds) : (site.completed_at || site.started_at || '').slice(0, 10)"></span>
                             </div>
                         </div>
@@ -480,7 +493,7 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
-                                    <span>Загрузка...</span>
+                                    <span>{{ __('site-cloner::archive.status_downloading') }}</span>
                                 </button>
                             </template>
 
@@ -488,7 +501,7 @@
                                 <div class="flex items-center gap-2">
                                     <a :href="'/' + routePrefix + '/view/' + site.id + '/'" target="_blank"
                                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
-                                        <span>Открыть</span>
+                                        <span>{{ __('site-cloner::archive.btn_open_short') }}</span>
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                         </svg>
@@ -498,8 +511,9 @@
                                         <button type="button"
                                                 @click="openOptions = !openOptions"
                                                 @click.away="openOptions = false"
-                                                class="px-3 py-2 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0">
-                                            <span>Опции</span>
+                                                class="px-3 py-2 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0"
+                                                title="{{ __('site-cloner::archive.options_title') }}">
+                                            <span>{{ __('site-cloner::archive.btn_options') }}</span>
                                             <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                             </svg>
@@ -521,7 +535,7 @@
                                                 <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                                 </svg>
-                                                <span>Страницы сайта</span>
+                                                <span>{{ __('site-cloner::archive.opt_pages') }}</span>
                                             </button>
 
                                             <button type="button"
@@ -530,7 +544,7 @@
                                                 <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                                                 </svg>
-                                                <span>Ресурсы и CDN</span>
+                                                <span>{{ __('site-cloner::archive.opt_resources') }}</span>
                                             </button>
 
                                             <a :href="'/' + routePrefix + '/export/' + site.id"
@@ -539,7 +553,7 @@
                                                 <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                                 </svg>
-                                                <span>Скачать ZIP</span>
+                                                <span>{{ __('site-cloner::archive.opt_download_zip') }}</span>
                                             </a>
 
                                             <div class="border-t border-sand-100 my-1"></div>
@@ -550,7 +564,7 @@
                                                 <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                 </svg>
-                                                <span>Удалить сайт</span>
+                                                <span>{{ __('site-cloner::archive.opt_delete') }}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -568,10 +582,10 @@
         <div @click.away="pagesModalSite = null" class="bg-white border border-sand-200 rounded-2xl max-w-xl w-full p-7 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
             <div class="flex items-center justify-between pb-3.5 border-b border-sand-200">
                 <div class="min-w-0 flex-1">
-                    <h3 class="text-lg font-bold font-heading text-ink-900 truncate" x-text="'Страницы: ' + (pagesModalSite ? pagesModalSite.id : '')"></h3>
-                    <p class="text-sm text-ink-400">Выберите страницу для открытия в браузере</p>
+                    <h3 class="text-lg font-bold font-heading text-ink-900 truncate" x-text="translations.pagesOf + ' ' + (pagesModalSite ? pagesModalSite.id : '')"></h3>
+                    <p class="text-sm text-ink-400">{{ __('site-cloner::modals.pages_subtitle') }}</p>
                 </div>
-                <button @click="pagesModalSite = null" class="text-ink-400 hover:text-ink-900 text-lg leading-none p-1.5">
+                <button @click="pagesModalSite = null" class="text-ink-400 hover:text-ink-900 text-lg leading-none p-1.5 cursor-pointer">
                     ✕
                 </button>
             </div>
@@ -579,7 +593,7 @@
             <div class="relative">
                 <input type="text"
                        x-model="pagesSearchQuery"
-                       placeholder="Фильтр страниц..."
+                       placeholder="{{ __('site-cloner::modals.pages_search_placeholder') }}"
                        class="w-full bg-sand-50 border border-sand-200 rounded-xl px-4 py-2.5 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:border-brand">
             </div>
 
@@ -588,17 +602,17 @@
                     <a :href="'/' + routePrefix + '/view/' + pagesModalSite.id + '/' + page" target="_blank"
                        class="flex items-center justify-between p-3 rounded-xl bg-sand-50 hover:bg-sand-100 border border-sand-200 text-sm text-ink-600 hover:text-ink-900 transition">
                         <span class="font-mono truncate" x-text="page"></span>
-                        <span class="text-brand font-heading text-sm font-semibold shrink-0 ml-2">Открыть →</span>
+                        <span class="text-brand font-heading text-sm font-semibold shrink-0 ml-2">{{ __('site-cloner::modals.pages_open') }}</span>
                     </a>
                 </template>
                 <template x-if="filteredModalPages.length === 0">
-                    <p class="text-sm text-ink-400 text-center py-8">Страниц не найдено.</p>
+                    <p class="text-sm text-ink-400 text-center py-8">{{ __('site-cloner::modals.pages_empty') }}</p>
                 </template>
             </div>
 
             <div class="pt-3.5 border-t border-sand-200 flex justify-end">
-                <button @click="pagesModalSite = null" class="px-5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-900 rounded-xl text-sm font-heading font-semibold transition">
-                    Закрыть
+                <button @click="pagesModalSite = null" class="px-5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-900 rounded-xl text-sm font-heading font-semibold transition cursor-pointer">
+                    {{ __('site-cloner::modals.pages_btn_close') }}
                 </button>
             </div>
         </div>
@@ -611,12 +625,12 @@
             <div class="flex items-center justify-between pb-4 border-b border-sand-200">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2">
-                        <span class="px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded-lg bg-sand-100 text-ink-600">Аудит зависимостей</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded-lg bg-sand-100 text-ink-600">{{ __('site-cloner::modals.resources_badge') }}</span>
                         <h3 class="text-xl font-bold font-heading text-ink-900 truncate" x-text="resourcesModalSite ? resourcesModalSite.id : ''"></h3>
                     </div>
-                    <p class="text-sm text-ink-500 mt-1">Внешние библиотеки, CDN, шрифты, медиафайлы и заблокированные ссылки</p>
+                    <p class="text-sm text-ink-500 mt-1">{{ __('site-cloner::modals.resources_subtitle') }}</p>
                 </div>
-                <button @click="resourcesModalSite = null" class="text-ink-400 hover:text-ink-900 text-xl leading-none p-2 rounded-xl hover:bg-sand-100 transition">
+                <button @click="resourcesModalSite = null" class="text-ink-400 hover:text-ink-900 text-xl leading-none p-2 rounded-xl hover:bg-sand-100 transition cursor-pointer">
                     ✕
                 </button>
             </div>
@@ -627,7 +641,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                 </svg>
-                <p class="text-sm font-medium text-ink-600">Анализ внешних ресурсов и библиотек...</p>
+                <p class="text-sm font-medium text-ink-600">{{ __('site-cloner::modals.resources_loading') }}</p>
             </div>
 
             <!-- Loaded Content -->
@@ -635,19 +649,19 @@
                 <!-- Summary Stats Counters -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="bg-sand-50 border border-sand-200 rounded-2xl p-4">
-                        <span class="text-xs font-medium text-ink-400 uppercase tracking-wider block">Всего доменов</span>
+                        <span class="text-xs font-medium text-ink-400 uppercase tracking-wider block">{{ __('site-cloner::modals.resources_total_domains') }}</span>
                         <span class="text-2xl font-bold font-heading text-ink-900 mt-1 block" x-text="resourcesData?.summary?.total_domains || 0"></span>
                     </div>
                     <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-                        <span class="text-xs font-semibold text-emerald-800 uppercase tracking-wider block">💾 Офлайн (скачано)</span>
+                        <span class="text-xs font-semibold text-emerald-800 uppercase tracking-wider block">💾 {{ __('site-cloner::modals.resources_offline_downloaded') }}</span>
                         <span class="text-2xl font-bold font-heading text-emerald-700 mt-1 block" x-text="resourcesData?.summary?.downloaded_count || 0"></span>
                     </div>
                     <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4">
-                        <span class="text-xs font-semibold text-sky-800 uppercase tracking-wider block">🔗 Внешние CDN</span>
+                        <span class="text-xs font-semibold text-sky-800 uppercase tracking-wider block">🔗 {{ __('site-cloner::modals.resources_external_cdn') }}</span>
                         <span class="text-2xl font-bold font-heading text-sky-700 mt-1 block" x-text="resourcesData?.summary?.external_count || 0"></span>
                     </div>
                     <div class="bg-sand-100 border border-sand-200 rounded-2xl p-4">
-                        <span class="text-xs font-semibold text-ink-600 uppercase tracking-wider block">🚫 Заблокировано</span>
+                        <span class="text-xs font-semibold text-ink-600 uppercase tracking-wider block">🚫 {{ __('site-cloner::modals.resources_deactivated') }}</span>
                         <span class="text-2xl font-bold font-heading text-ink-700 mt-1 block" x-text="resourcesData?.summary?.deactivated_count || 0"></span>
                     </div>
                 </div>
@@ -657,30 +671,30 @@
                     <div class="flex items-center gap-1.5 p-1 bg-sand-100 rounded-xl overflow-x-auto">
                         <button @click="resourcesFilter = 'all'"
                                 :class="resourcesFilter === 'all' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
-                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
-                            Все
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0 cursor-pointer">
+                            {{ __('site-cloner::modals.resources_filter_all') }}
                         </button>
                         <button @click="resourcesFilter = 'downloaded'"
                                 :class="resourcesFilter === 'downloaded' ? 'bg-white text-emerald-800 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
-                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
-                            💾 Скачано офлайн
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0 cursor-pointer">
+                            💾 {{ __('site-cloner::modals.resources_filter_downloaded') }}
                         </button>
                         <button @click="resourcesFilter = 'external'"
                                 :class="resourcesFilter === 'external' ? 'bg-white text-sky-800 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
-                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
-                            🔗 Внешние CDN
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0 cursor-pointer">
+                            🔗 {{ __('site-cloner::modals.resources_filter_external') }}
                         </button>
                         <button @click="resourcesFilter = 'deactivated'"
                                 :class="resourcesFilter === 'deactivated' ? 'bg-white text-ink-800 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
-                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
-                            🚫 Ссылки
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0 cursor-pointer">
+                            🚫 {{ __('site-cloner::modals.resources_filter_deactivated') }}
                         </button>
                     </div>
 
                     <div class="relative flex-1 max-w-xs">
                         <input type="text"
                                x-model="resourcesSearch"
-                               placeholder="Поиск по домену..."
+                               placeholder="{{ __('site-cloner::modals.resources_search_placeholder') }}"
                                class="w-full bg-sand-50 border border-sand-200 rounded-xl px-3.5 py-2 text-xs text-ink-900 placeholder-ink-400 focus:outline-none focus:border-brand">
                     </div>
                 </div>
@@ -713,15 +727,15 @@
                                             <span class="font-semibold text-ink-900" x-text="count"></span> <span x-text="typeName"></span>
                                         </span>
                                     </template>
-                                    <span class="text-xs font-semibold font-mono text-ink-400 bg-sand-50 px-2 py-0.5 rounded" x-text="'Всего: ' + item.count"></span>
+                                    <span class="text-xs font-semibold font-mono text-ink-400 bg-sand-50 px-2 py-0.5 rounded" x-text="translations.totalLabel + ' ' + item.count"></span>
                                 </div>
                             </div>
 
                             <!-- Expandable URL list toggle -->
                             <div x-data="{ expanded: false }">
                                 <button @click="expanded = !expanded"
-                                        class="text-xs font-semibold text-brand hover:text-brand-hover flex items-center gap-1 transition">
-                                    <span x-text="expanded ? 'Скрыть URL-адреса ▲' : 'Показать примеры URL (' + item.urls.length + ') ▼'"></span>
+                                        class="text-xs font-semibold text-brand hover:text-brand-hover flex items-center gap-1 transition cursor-pointer">
+                                    <span x-text="expanded ? translations.hideUrls : translations.showUrls + ' (' + item.urls.length + ') ▼'"></span>
                                 </button>
 
                                 <div x-show="expanded" x-cloak class="mt-2.5 bg-sand-50 border border-sand-200 rounded-xl p-3 space-y-1.5 max-h-48 overflow-y-auto">
@@ -735,7 +749,7 @@
 
                     <template x-if="filteredResourcesDomains.length === 0">
                         <div class="text-center py-10 text-ink-400 text-sm">
-                            Ресурсов по выбранным критериям не найдено.
+                            {{ __('site-cloner::modals.resources_empty') }}
                         </div>
                     </template>
                 </div>
@@ -744,14 +758,14 @@
             <!-- Footer -->
             <div class="pt-4 border-t border-sand-200 flex items-center justify-between">
                 <button @click="fetchResources(resourcesModalSite.id, true)"
-                        class="px-4 py-2 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-xs font-heading font-semibold transition flex items-center gap-1.5">
+                        class="px-4 py-2 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-xs font-heading font-semibold transition flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    Пересканировать ресурсы
+                    {{ __('site-cloner::modals.resources_btn_rescan') }}
                 </button>
-                <button @click="resourcesModalSite = null" class="px-5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-900 rounded-xl text-sm font-heading font-semibold transition">
-                    Закрыть
+                <button @click="resourcesModalSite = null" class="px-5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-900 rounded-xl text-sm font-heading font-semibold transition cursor-pointer">
+                    {{ __('site-cloner::modals.resources_btn_close') }}
                 </button>
             </div>
         </div>
@@ -760,17 +774,17 @@
     <!-- Delete Confirmation Modal -->
     <div x-show="siteToDelete !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/40 backdrop-blur-sm">
         <div @click.away="siteToDelete = null" class="bg-white border border-sand-200 rounded-2xl max-w-md w-full p-7 shadow-2xl space-y-4">
-            <h3 class="text-lg font-bold font-heading text-ink-900">Удаление сайта</h3>
+            <h3 class="text-lg font-bold font-heading text-ink-900">{{ __('site-cloner::modals.delete_title') }}</h3>
             <p class="text-sm text-ink-600 leading-relaxed">
-                Удалить <code class="font-mono text-ink-900 bg-sand-100 px-1.5 py-0.5 rounded font-semibold" x-text="siteToDelete ? siteToDelete.id : ''"></code>? Все локальные файлы и ассеты будут стёрты с диска.
+                {{ __('site-cloner::modals.delete_confirm_prefix') }} <code class="font-mono text-ink-900 bg-sand-100 px-1.5 py-0.5 rounded font-semibold" x-text="siteToDelete ? siteToDelete.id : ''"></code>? {{ __('site-cloner::modals.delete_confirm_suffix') }}
             </p>
 
             <div class="flex items-center justify-end gap-3 pt-2">
-                <button @click="siteToDelete = null" class="px-4 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-sm font-heading font-medium transition">
-                    Отмена
+                <button @click="siteToDelete = null" class="px-4 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-sm font-heading font-medium transition cursor-pointer">
+                    {{ __('site-cloner::modals.delete_btn_cancel') }}
                 </button>
-                <button @click="executeDelete()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm">
-                    Удалить
+                <button @click="executeDelete()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm cursor-pointer">
+                    {{ __('site-cloner::modals.delete_btn_confirm') }}
                 </button>
             </div>
         </div>
@@ -779,24 +793,24 @@
     <!-- Duplicate Warning Modal -->
     <div x-show="duplicateModal !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/40 backdrop-blur-sm">
         <div @click.away="duplicateModal = null" class="bg-white border border-sand-200 rounded-2xl max-w-md w-full p-7 shadow-2xl space-y-4">
-            <h3 class="text-lg font-bold font-heading text-ink-900">Сайт уже скачан</h3>
+            <h3 class="text-lg font-bold font-heading text-ink-900">{{ __('site-cloner::modals.duplicate_title') }}</h3>
             <p class="text-sm text-ink-600 leading-relaxed">
-                Этот сайт уже есть в локальном архиве:
+                {{ __('site-cloner::modals.duplicate_desc') }}
                 <span class="block font-mono text-brand font-semibold mt-1.5 truncate text-base" x-text="duplicateModal ? duplicateModal.id : ''"></span>
             </p>
 
             <div class="flex items-center justify-end gap-2.5 pt-2">
-                <button @click="duplicateModal = null" class="px-3.5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-sm font-heading font-medium transition">
-                    Отмена
+                <button @click="duplicateModal = null" class="px-3.5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-sm font-heading font-medium transition cursor-pointer">
+                    {{ __('site-cloner::modals.duplicate_btn_cancel') }}
                 </button>
                 <a :href="'/' + routePrefix + '/view/' + (duplicateModal ? duplicateModal.id : '') + '/'" target="_blank"
                    @click="duplicateModal = null"
                    class="px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition">
-                    Открыть
+                    {{ __('site-cloner::modals.duplicate_btn_open') }}
                 </a>
                 <button @click="startDownload(duplicateModal.url, true); duplicateModal = null;"
-                        class="px-4 py-2.5 bg-sand-200 hover:bg-sand-300 text-ink-900 rounded-xl text-sm font-heading font-medium transition">
-                    Перезакачать
+                        class="px-4 py-2.5 bg-sand-200 hover:bg-sand-300 text-ink-900 rounded-xl text-sm font-heading font-medium transition cursor-pointer">
+                    {{ __('site-cloner::modals.duplicate_btn_reclone') }}
                 </button>
             </div>
         </div>
@@ -804,7 +818,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-sand-200 bg-white py-6 text-center text-sm text-ink-400 mt-auto">
-        <span>Site Cloner — Локальный автономный зеркализатор сайтов</span>
+        <span>{{ __('site-cloner::common.footer') }}</span>
     </footer>
 
     <!-- Alpine.js Application Logic -->
@@ -829,6 +843,29 @@
                 resourcesSearch: '',
                 sites: @json(array_map(fn($s) => $s->toArray(), $sites)),
                 totalSizeFormatted: '{{ $totalSizeFormatted }}',
+
+                translations: {
+                    cloneWebsite: @json(__('site-cloner::workbench.btn_clone')),
+                    checking: @json(__('site-cloner::workbench.btn_checking')),
+                    modeLight: @json(__('site-cloner::workbench.mode_light')),
+                    modeFull: @json(__('site-cloner::workbench.mode_full')),
+                    initializing: @json(__('site-cloner::archive.initializing')),
+                    unknown: @json(__('site-cloner::archive.unknown')),
+                    cloned: @json(__('site-cloner::archive.card_cloned')),
+                    timer: @json(__('site-cloner::archive.card_timer')),
+                    downloadError: @json(__('site-cloner::archive.download_error')),
+                    pagesOf: @json(__('site-cloner::modals.pages_title_prefix')),
+                    hideUrls: @json(__('site-cloner::modals.resources_btn_hide_urls')),
+                    showUrls: @json(__('site-cloner::modals.resources_btn_show_urls')),
+                    totalLabel: @json(__('site-cloner::modals.resources_total_label')),
+                    connecting: @json(__('site-cloner::common.alerts.connecting')),
+                    auditFailed: @json(__('site-cloner::common.alerts.audit_failed')),
+                    checkFailed: @json(__('site-cloner::common.alerts.check_failed')),
+                    startFailed: @json(__('site-cloner::common.alerts.start_failed')),
+                    requestFailed: @json(__('site-cloner::common.alerts.request_failed')),
+                    deleteFailed: @json(__('site-cloner::common.alerts.delete_failed')),
+                    deleteError: @json(__('site-cloner::common.alerts.delete_error'))
+                },
 
                 init() {
                     this.sites.forEach(site => {
@@ -906,7 +943,7 @@
                         if (res.ok) {
                             this.resourcesData = await res.json();
                         } else {
-                            alert('Не удалось загрузить аудит ресурсов');
+                            alert(this.translations.auditFailed);
                         }
                     } catch (e) {
                         console.error(e);
@@ -950,7 +987,7 @@
                         await this.startDownload(this.inputUrl, false);
                         this.inputUrl = '';
                     } catch (err) {
-                        alert('Ошибка проверки URL: ' + err.message);
+                        alert(this.translations.checkFailed + err.message);
                     } finally {
                         this.isSubmitting = false;
                     }
@@ -974,7 +1011,7 @@
                         }
 
                         if (!data.success) {
-                            alert(data.error || 'Не удалось запустить скачивание');
+                            alert(data.error || this.translations.startFailed);
                             return;
                         }
 
@@ -989,7 +1026,7 @@
                             pages_count: initialManifest.pages_count || 0,
                             total_bytes: initialManifest.total_bytes || 0,
                             human_size: initialManifest.human_size || '0 B',
-                            current_file: 'Подключение к серверу...',
+                            current_file: this.translations.connecting,
                             elapsed_seconds: 0,
                             started_at: initialManifest.started_at || new Date().toISOString(),
                             download_mode: this.downloadMode,
@@ -1007,7 +1044,7 @@
 
                         this.connectDownload(siteId);
                     } catch (err) {
-                        alert('Ошибка запроса: ' + err.message);
+                        alert(this.translations.requestFailed + err.message);
                     }
                 },
 
@@ -1129,10 +1166,10 @@
                             this.sites = this.sites.filter(s => s.id !== id);
                             this.recalculateTotalSize();
                         } else {
-                            alert('Не удалось удалить сайт');
+                            alert(this.translations.deleteFailed);
                         }
                     } catch (err) {
-                        alert('Ошибка удаления: ' + err.message);
+                        alert(this.translations.deleteError + err.message);
                     } finally {
                         this.siteToDelete = null;
                     }

@@ -367,10 +367,13 @@ final class AssetRewriter
 
         // 7. Inject Viewer Notice Script into <body>
         $scriptTag = $dom->createElement('script');
-        $scriptTag->nodeValue = <<<'JS'
+        $noticeHeading = addslashes($this->trans('site-cloner::common.viewer_notice.heading', 'Section not downloaded:'));
+        $noticeBody = addslashes($this->trans('site-cloner::common.viewer_notice.body', 'This link points to an uncloned section outside the downloaded folder scope:'));
+
+        $scriptTag->nodeValue = <<<JS
 window.__siteClonerShowNotice = function(el, ev) {
     if (ev) ev.preventDefault();
-    var href = el.getAttribute('data-original-href') || 'внешняя ссылка';
+    var href = el.getAttribute('data-original-href') || 'external link';
     var toast = document.getElementById('__site_cloner_toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -378,7 +381,7 @@ window.__siteClonerShowNotice = function(el, ev) {
         toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;font-family:sans-serif;font-size:13px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:999999;transition:opacity 0.3s;max-width:90%;text-align:center;border:1px solid #374151;';
         document.body.appendChild(toast);
     }
-    toast.innerHTML = '📁 <strong>Раздел не скачан:</strong> Эта ссылка ведет в соседний раздел сайта за пределами скачанной папки:<br><span style="color:#93c5fd;word-break:break-all;">' + href + '</span>';
+    toast.innerHTML = '📁 <strong>{$noticeHeading}</strong> {$noticeBody}<br><span style="color:#93c5fd;word-break:break-all;">' + href + '</span>';
     toast.style.opacity = '1';
     toast.style.display = 'block';
     clearTimeout(window.__toastTimeout);
@@ -499,5 +502,10 @@ JS;
         ];
 
         return in_array($ext, $assetExtensions, true);
+    }
+
+    private function trans(string $key, string $default): string
+    {
+        return function_exists('app') && app()->bound('translator') ? __($key) : $default;
     }
 }

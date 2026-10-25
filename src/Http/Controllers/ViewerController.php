@@ -31,7 +31,7 @@ final class ViewerController
 
         // Prevent path traversal attacks
         if (str_contains($path, '..') || str_contains($path, '\\')) {
-            return new Response('Доступ запрещен', 403);
+            return new Response(__('site-cloner::api.access_denied'), 403);
         }
 
         $fullPath = $this->storage->getFilePath($siteId, $path);
