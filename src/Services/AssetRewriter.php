@@ -96,6 +96,7 @@ final class AssetRewriter
         string $siteId,
         ?callable $onAssetFound = null,
         ?callable $onPageFound = null,
+        string $downloadMode = 'light',
     ): string {
         $onAssetFound ??= static function (): void {};
         $onPageFound ??= static function (): void {};
@@ -125,8 +126,8 @@ final class AssetRewriter
                 $rel = strtolower($link->getAttribute('rel'));
                 $resolved = $this->urlNormalizer->resolve($rawHref, $currentUrl);
 
-                if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
-                    continue; // Leave Google fonts / CDN as is
+                if (! $this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
+                    continue; // Leave Google fonts / CDN as is, or external CDN in light mode
                 }
 
                 if ($this->isAssetUrl($resolved) || in_array($rel, ['stylesheet', 'icon', 'shortcut icon', 'apple-touch-icon', 'preload', 'modulepreload', 'manifest'], true)) {
@@ -145,7 +146,7 @@ final class AssetRewriter
                 $rawSrc = $script->getAttribute('src');
                 $resolved = $this->urlNormalizer->resolve($rawSrc, $currentUrl);
 
-                if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                if (! $this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
                     continue;
                 }
 
@@ -174,7 +175,7 @@ final class AssetRewriter
                     $raw = $element->getAttribute($attr);
                     $resolved = $this->urlNormalizer->resolve($raw, $currentUrl);
 
-                    if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                    if (! $this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
                         continue;
                     }
 
@@ -205,7 +206,7 @@ final class AssetRewriter
 
                     if ($src !== '') {
                         $resolved = $this->urlNormalizer->resolve($src, $currentUrl);
-                        if (! $this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                        if ($this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
                             $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                             $onAssetFound($resolved, $localPath);
                             $src = $viewerPrefix.$localPath;
@@ -233,7 +234,7 @@ final class AssetRewriter
                         $cleanUrl = $hashPos !== false ? substr($raw, 0, $hashPos) : $raw;
 
                         $resolved = $this->urlNormalizer->resolve($cleanUrl, $currentUrl);
-                        if (! $this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                        if ($this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
                             $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                             $onAssetFound($resolved, $localPath);
                             $use->setAttribute($hrefAttr, $viewerPrefix.$localPath.$frag);
@@ -290,7 +291,7 @@ final class AssetRewriter
             foreach ($styledElements as $el) {
                 $style = $el->getAttribute('style');
                 if (str_contains($style, 'url(')) {
-                    $rewrittenStyle = $this->rewriteCssUrls($style, $currentUrl, $rootHost, $viewerPrefix, $onAssetFound);
+                    $rewrittenStyle = $this->rewriteCssUrls($style, $currentUrl, $rootHost, $viewerPrefix, $onAssetFound, $downloadMode);
                     $el->setAttribute('style', $rewrittenStyle);
                 }
             }
@@ -340,10 +341,11 @@ JS;
         string $rootHost,
         string $siteId,
         ?callable $onAssetFound = null,
+        string $downloadMode = 'light',
     ): string {
         $viewerPrefix = '/'.trim($this->routePrefix, '/').'/view/'.$siteId.'/';
 
-        return $this->rewriteCssUrls($css, $currentCssUrl, $rootHost, $viewerPrefix, $onAssetFound);
+        return $this->rewriteCssUrls($css, $currentCssUrl, $rootHost, $viewerPrefix, $onAssetFound, $downloadMode);
     }
 
     /**
@@ -355,13 +357,14 @@ JS;
         string $rootHost,
         string $viewerPrefix,
         ?callable $onAssetFound = null,
+        string $downloadMode = 'light',
     ): string {
         $onAssetFound ??= static function (): void {};
 
         // Regex matches url(...) with or without quotes
         return (string) preg_replace_callback(
             '/url\(\s*(?:\'([^\']+)\'|"([^"]+)"|([^)]+))\s*\)/i',
-            function (array $matches) use ($currentUrl, $rootHost, $viewerPrefix, $onAssetFound): string {
+            function (array $matches) use ($currentUrl, $rootHost, $viewerPrefix, $onAssetFound, $downloadMode): string {
                 $raw = '';
                 if (! empty($matches[1])) {
                     $raw = $matches[1];
@@ -383,7 +386,7 @@ JS;
 
                 $resolved = $this->urlNormalizer->resolve($cleanRaw, $currentUrl);
 
-                if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                if (! $this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
                     return 'url("'.$resolved.$frag.'")';
                 }
 
@@ -394,6 +397,22 @@ JS;
             },
             $css
         );
+    }
+
+    private function shouldDownloadAsset(string $url, string $rootHost, string $downloadMode): bool
+    {
+        if ($this->urlNormalizer->isExternalCdn($url, $this->externalCdnHosts)) {
+            return false;
+        }
+
+        if ($downloadMode === 'light') {
+            $host = parse_url($url, PHP_URL_HOST);
+            if ($host !== null && $host !== '' && strcasecmp((string) $host, $rootHost) !== 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function isAssetUrl(string $url): bool

@@ -146,6 +146,31 @@
                         </button>
                     </div>
 
+                    <!-- Mode Selector -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-sand-200">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-ink-500 uppercase tracking-wider">Режим:</span>
+                            <div class="inline-flex p-1 bg-sand-100 rounded-xl">
+                                <button type="button"
+                                        @click="downloadMode = 'light'"
+                                        :class="downloadMode === 'light' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
+                                    <span>⚡ Легкий (для верстки)</span>
+                                </button>
+                                <button type="button"
+                                        @click="downloadMode = 'full'"
+                                        :class="downloadMode === 'full' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
+                                    <span>✈️ Полный (режим самолёта)</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-ink-500">
+                            <span x-show="downloadMode === 'light'">⚡ <strong>Легкий (быстро):</strong> чистый код шаблона, внешние CDN остаются оригинальными ссылками.</span>
+                            <span x-show="downloadMode === 'full'">✈️ <strong>Полный (100% офлайн):</strong> все внешние библиотеки и картинки скачиваются локально.</span>
+                        </div>
+                    </div>
+
                     <!-- Clean helper notes -->
                     <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-600 pt-1">
                         <span class="flex items-center gap-2">
@@ -280,9 +305,15 @@
                                     <h3 class="text-base sm:text-lg font-bold font-heading text-ink-900 truncate" :title="site.id" x-text="site.id"></h3>
                                     <a :href="site.url" target="_blank" class="text-sm text-ink-400 hover:text-brand truncate block mt-0.5" :title="site.url" x-text="site.url"></a>
                                 </div>
-                                <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                    Готов
-                                </span>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold border"
+                                          :class="site.download_mode === 'full' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+                                          x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Легкий'">
+                                    </span>
+                                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Готов
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Metrics row -->
@@ -331,6 +362,15 @@
                                 </svg>
                                 <span>Ресурсы</span>
                             </button>
+
+                            <!-- Download ZIP -->
+                            <a :href="'/' + routePrefix + '/export/' + site.id"
+                               class="p-2.5 text-ink-400 hover:text-ink-900 hover:bg-sand-100 rounded-xl transition"
+                               title="Скачать ZIP архив">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                            </a>
 
                             <!-- Delete -->
                             <button @click="confirmDelete(site)"
@@ -597,6 +637,7 @@
             return {
                 routePrefix: '{{ $routePrefix }}',
                 inputUrl: '',
+                downloadMode: 'light',
                 isSubmitting: false,
                 searchQuery: '',
                 sortBy: 'latest',
@@ -759,7 +800,7 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({ url: url, force: force })
+                            body: JSON.stringify({ url: url, force: force, mode: this.downloadMode })
                         });
 
                         const data = await res.json();

@@ -28,6 +28,7 @@ final class SiteManifest
         public array $pages = [],
         public array $logs = [],
         public array $externalResources = [],
+        public string $downloadMode = 'light',
     ) {}
 
     /**
@@ -52,6 +53,7 @@ final class SiteManifest
             pages: is_array($data['pages'] ?? null) ? $data['pages'] : [],
             logs: is_array($data['logs'] ?? null) ? $data['logs'] : [],
             externalResources: is_array($data['externalResources'] ?? null) ? $data['externalResources'] : (is_array($data['external_resources'] ?? null) ? $data['external_resources'] : []),
+            downloadMode: (string) ($data['downloadMode'] ?? ($data['download_mode'] ?? 'light')),
         );
     }
 
@@ -77,6 +79,7 @@ final class SiteManifest
             'pages' => $this->pages,
             'logs' => $this->logs,
             'external_resources' => $this->externalResources,
+            'download_mode' => $this->downloadMode,
             'human_size' => $this->humanReadableSize(),
         ];
     }

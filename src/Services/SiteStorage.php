@@ -144,4 +144,37 @@ final class SiteStorage
     {
         return $this->getSitePath($siteId).'/'.ltrim($relativePath, '/');
     }
+
+    public function createZip(string $siteId): ?string
+    {
+        $siteDir = $this->getSitePath($siteId);
+        if (! $this->filesystem->isDirectory($siteDir)) {
+            return null;
+        }
+
+        $exportDir = rtrim($this->basePath, '/').'/_exports';
+        if (! $this->filesystem->isDirectory($exportDir)) {
+            $this->filesystem->makeDirectory($exportDir, 0755, true);
+        }
+
+        $zipPath = $exportDir.'/'.$siteId.'.zip';
+        if ($this->filesystem->exists($zipPath)) {
+            $this->filesystem->delete($zipPath);
+        }
+
+        $zip = new \ZipArchive;
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return null;
+        }
+
+        $files = $this->filesystem->allFiles($siteDir);
+        foreach ($files as $file) {
+            $relativePath = substr($file->getPathname(), strlen($siteDir) + 1);
+            $zip->addFile($file->getPathname(), $relativePath);
+        }
+
+        $zip->close();
+
+        return $zipPath;
+    }
 }

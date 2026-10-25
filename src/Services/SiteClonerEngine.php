@@ -110,7 +110,8 @@ final class SiteClonerEngine
                                         if (! isset($visitedAssets[$embeddedAssetUrl]) && ! isset($assetQueue[$embeddedAssetUrl])) {
                                             $assetQueue[$embeddedAssetUrl] = $embeddedLocalPath;
                                         }
-                                    }
+                                    },
+                                    downloadMode: $manifest->downloadMode,
                                 );
                             }
 
@@ -172,7 +173,8 @@ final class SiteClonerEngine
                                 if (! isset($visitedPages[$normalized]) && ! isset($pageQueue[$normalized])) {
                                     $pageQueue[$normalized] = $newLocalPath;
                                 }
-                            }
+                            },
+                            downloadMode: $manifest->downloadMode,
                         );
 
                         $bytesWritten = $this->storage->saveFile($manifest->id, $localPagePath, $rewrittenHtml);

@@ -13,6 +13,7 @@ use AlexKassel\SiteCloner\Services\UrlNormalizer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class DashboardController
@@ -91,6 +92,11 @@ final class DashboardController
         $port = isset($parsed['port']) ? ':'.$parsed['port'] : '';
         $baseUrl = "{$scheme}://{$host}{$port}{$scopePath}";
 
+        $mode = (string) $request->input('mode', 'light');
+        if (! in_array($mode, ['light', 'full'], true)) {
+            $mode = 'light';
+        }
+
         $manifest = new SiteManifest(
             id: $id,
             url: $url,
@@ -98,6 +104,7 @@ final class DashboardController
             scopePath: $scopePath,
             status: 'pending',
             startedAt: date('Y-m-d H:i:s'),
+            downloadMode: $mode,
         );
 
         $this->storage->saveManifest($manifest);
@@ -209,5 +216,22 @@ final class DashboardController
             'success' => $deleted,
             'id' => $siteId,
         ]);
+    }
+
+    public function export(string $siteId): BinaryFileResponse|JsonResponse
+    {
+        $manifest = $this->storage->getManifest($siteId);
+        if ($manifest === null) {
+            return response()->json(['error' => 'Сайт не найден'], 404);
+        }
+
+        $zipPath = $this->storage->createZip($siteId);
+        if ($zipPath === null || ! file_exists($zipPath)) {
+            return response()->json(['error' => 'Не удалось создать ZIP архив'], 500);
+        }
+
+        return response()->download($zipPath, $siteId.'.zip', [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
     }
 }

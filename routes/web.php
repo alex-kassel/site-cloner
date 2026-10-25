@@ -17,5 +17,6 @@ Route::prefix($prefix)->middleware($middleware)->group(function (): void {
     Route::get('/resources/{siteId}', [DashboardController::class, 'resources'])->name('site-cloner.resources');
     Route::get('/progress/{siteId}', [DashboardController::class, 'progress'])->name('site-cloner.progress');
     Route::delete('/sites/{siteId}', [DashboardController::class, 'destroy'])->name('site-cloner.destroy');
+    Route::get('/export/{siteId}', [DashboardController::class, 'export'])->name('site-cloner.export');
     Route::get('/view/{siteId}/{path?}', [ViewerController::class, 'serve'])->where('path', '.*')->name('site-cloner.view');
 });

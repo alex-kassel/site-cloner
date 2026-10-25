@@ -122,4 +122,61 @@ CSS;
 
         $this->assertStringContainsString('/site-cloner/view/laravel-site/build/assets/app-123.js', $rewritten);
     }
+
+    public function test_light_mode_keeps_external_cdn_links_untouched(): void
+    {
+        $html = <<<'HTML'
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/local-style.css">
+</head>
+<body></body>
+</html>
+HTML;
+
+        $discoveredAssets = [];
+
+        $rewritten = $this->rewriter->rewriteHtml(
+            html: $html,
+            currentUrl: 'https://example.com/demo/index.html',
+            rootScopeUrl: 'https://example.com/demo/',
+            siteId: 'test-site',
+            onAssetFound: function ($url, $local) use (&$discoveredAssets): void {
+                $discoveredAssets[$url] = $local;
+            },
+            downloadMode: 'light'
+        );
+
+        // External CDN should stay untouched
+        $this->assertStringContainsString('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css', $rewritten);
+        $this->assertStringContainsString('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js', $rewritten);
+        $this->assertArrayNotHasKey('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css', $discoveredAssets);
+
+        // Local asset should still be rewritten and discovered
+        $this->assertStringContainsString('/site-cloner/view/test-site/assets/css/local-style.css', $rewritten);
+        $this->assertArrayHasKey('https://example.com/assets/css/local-style.css', $discoveredAssets);
+    }
+
+    public function test_full_mode_downloads_external_cdn(): void
+    {
+        $html = '<script src="https://cdn.jsdelivr.net/npm/bootstrap.js"></script>';
+        $discoveredAssets = [];
+
+        $rewritten = $this->rewriter->rewriteHtml(
+            html: $html,
+            currentUrl: 'https://example.com/demo/',
+            rootScopeUrl: 'https://example.com/demo/',
+            siteId: 'test-site',
+            onAssetFound: function ($url, $local) use (&$discoveredAssets): void {
+                $discoveredAssets[$url] = $local;
+            },
+            downloadMode: 'full'
+        );
+
+        $this->assertStringContainsString('/site-cloner/view/test-site/_external/cdn.jsdelivr.net/npm/bootstrap.js', $rewritten);
+        $this->assertArrayHasKey('https://cdn.jsdelivr.net/npm/bootstrap.js', $discoveredAssets);
+    }
 }
