@@ -297,8 +297,23 @@ final class AssetRewriter
 
                 $resolved = $this->urlNormalizer->resolve($trimmed, $currentUrl);
                 $normalized = $this->urlNormalizer->normalize($resolved);
+                $targetHost = strtolower((string) parse_url($normalized, PHP_URL_HOST));
 
-                // If link points directly to an asset (e.g. PDF, ZIP, image)
+                // 1. External Links (different domain / external site, e.g. GitHub, docs, partners):
+                // Always keep working as real external links so user can navigate if online
+                if ($targetHost !== '' && strcasecmp($targetHost, $rootHost) !== 0) {
+                    $anchor->setAttribute('href', $resolved);
+                    if (! $anchor->hasAttribute('target')) {
+                        $anchor->setAttribute('target', '_blank');
+                    }
+                    if (! $anchor->hasAttribute('rel')) {
+                        $anchor->setAttribute('rel', 'noopener noreferrer');
+                    }
+
+                    continue;
+                }
+
+                // 2. Same-domain asset links (e.g. /files/manual.pdf)
                 if ($this->isAssetUrl($normalized)) {
                     $localPath = $this->toLocalAssetPath($normalized, $rootHost);
                     $onAssetFound($normalized, $localPath);
@@ -307,17 +322,19 @@ final class AssetRewriter
                     continue;
                 }
 
-                // Check if the page is in scope
+                // 3. Same-domain page links:
                 if ($this->urlNormalizer->isInScope($normalized, $rootScopeUrl)) {
+                    // In-scope: link to local downloaded relative page
                     $localPagePath = $this->toLocalPagePath($normalized, $rootScopeUrl);
                     $onPageFound($normalized, $localPagePath);
                     $anchor->setAttribute('href', $this->getRelativePath($currentPageLocalPath, $localPagePath));
                 } else {
-                    // Out of scope: Deactivate link per user decision #4
+                    // Out-of-scope on same site (neighboring folder that was not cloned, e.g. /partners when downloading /docs):
+                    // Deactivate so it does not result in a broken local file link
                     $anchor->setAttribute('href', 'javascript:void(0)');
                     $anchor->setAttribute('data-site-cloner-disabled', 'true');
                     $anchor->setAttribute('data-original-href', $resolved);
-                    $anchor->setAttribute('title', 'Ссылка за пределами скачанного пути: '.$resolved);
+                    $anchor->setAttribute('title', 'Раздел не скачан (вне диапазона): '.$resolved);
                     $anchor->setAttribute('onclick', 'window.__siteClonerShowNotice && window.__siteClonerShowNotice(this, event)');
                 }
             }
@@ -361,7 +378,7 @@ window.__siteClonerShowNotice = function(el, ev) {
         toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;font-family:sans-serif;font-size:13px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:999999;transition:opacity 0.3s;max-width:90%;text-align:center;border:1px solid #374151;';
         document.body.appendChild(toast);
     }
-    toast.innerHTML = '⚠️ <strong>Действие заблокировано:</strong> Ссылка находится за пределами скачанного пути:<br><span style="color:#93c5fd;word-break:break-all;">' + href + '</span>';
+    toast.innerHTML = '📁 <strong>Раздел не скачан:</strong> Эта ссылка ведет в соседний раздел сайта за пределами скачанной папки:<br><span style="color:#93c5fd;word-break:break-all;">' + href + '</span>';
     toast.style.opacity = '1';
     toast.style.display = 'block';
     clearTimeout(window.__toastTimeout);

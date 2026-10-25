@@ -35,6 +35,7 @@ final class AssetRewriterTest extends TestCase
     <img src="img/logo.png" alt="Logo">
     <a href="tables.html">Tables</a>
     <a href="/contacts">Outside Contact</a>
+    <a href="https://github.com/laravel/framework">External GitHub</a>
 </body>
 </html>
 HTML;
@@ -67,9 +68,13 @@ HTML;
         $this->assertStringContainsString('href="tables.html"', $rewritten);
         $this->assertArrayHasKey('https://bootstrapmade.com/content/demo/AppDashboard/tables.html', $discoveredPages);
 
-        // Out-of-scope link should be deactivated with data attributes
+        // Out-of-scope link on the same domain should be deactivated with data attributes
         $this->assertStringContainsString('data-site-cloner-disabled="true"', $rewritten);
         $this->assertStringContainsString('href="javascript:void(0)"', $rewritten);
+
+        // Truly external link (different domain) should remain fully functional with target="_blank"
+        $this->assertStringContainsString('href="https://github.com/laravel/framework"', $rewritten);
+        $this->assertStringContainsString('target="_blank"', $rewritten);
     }
 
     public function test_it_rewrites_css_urls_for_fonts_and_images(): void
