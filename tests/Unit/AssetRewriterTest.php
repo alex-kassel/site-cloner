@@ -100,4 +100,26 @@ CSS;
         $this->assertStringContainsString('/site-cloner/view/test-site/assets/fonts/fontawesome-webfont.woff2', $rewritten);
         $this->assertStringContainsString('/site-cloner/view/test-site/assets/img/hero-bg.jpg', $rewritten);
     }
+
+    public function test_it_maps_scope_root_without_trailing_slash_to_index_html(): void
+    {
+        $path = $this->rewriter->toLocalPagePath('https://laravel.com/framework/docs', 'https://laravel.com/framework/docs');
+        $this->assertSame('index.html', $path);
+
+        $subPath = $this->rewriter->toLocalPagePath('https://laravel.com/framework/docs/routing', 'https://laravel.com/framework/docs');
+        $this->assertSame('routing.html', $subPath);
+    }
+
+    public function test_it_rewrites_modulepreload_links(): void
+    {
+        $html = '<link rel="modulepreload" href="/build/assets/app-123.js">';
+        $rewritten = $this->rewriter->rewriteHtml(
+            html: $html,
+            currentUrl: 'https://laravel.com/framework/docs',
+            rootScopeUrl: 'https://laravel.com/framework/docs',
+            siteId: 'laravel-site'
+        );
+
+        $this->assertStringContainsString('/site-cloner/view/laravel-site/build/assets/app-123.js', $rewritten);
+    }
 }

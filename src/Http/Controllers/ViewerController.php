@@ -38,6 +38,28 @@ final class ViewerController
             }
         }
 
+        // If index.html requested but does not exist, find first available html page
+        if (! file_exists($fullPath) && $path === 'index.html') {
+            $manifest = $this->storage->getManifest($siteId);
+            if ($manifest && ! empty($manifest->pages)) {
+                foreach ($manifest->pages as $candidatePage) {
+                    $candidateFullPath = $this->storage->getFilePath($siteId, $candidatePage);
+                    if (file_exists($candidateFullPath) && ! is_dir($candidateFullPath)) {
+                        $fullPath = $candidateFullPath;
+                        break;
+                    }
+                }
+            }
+
+            if (! file_exists($fullPath)) {
+                $siteDir = $this->storage->getSitePath($siteId);
+                $htmlFiles = glob($siteDir.'/*.html') ?: [];
+                if (! empty($htmlFiles) && file_exists($htmlFiles[0])) {
+                    $fullPath = $htmlFiles[0];
+                }
+            }
+        }
+
         if (! file_exists($fullPath) || is_dir($fullPath)) {
             return new Response(
                 view('site-cloner::not-found', [

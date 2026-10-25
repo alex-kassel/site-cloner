@@ -56,6 +56,8 @@ return [
     'external_cdn_hosts' => [
         'fonts.googleapis.com',
         'fonts.gstatic.com',
+        'fonts.bunny.net',
+        'bunny.net',
     ],
 
     /*

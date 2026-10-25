@@ -51,14 +51,26 @@ final class AssetRewriter
         $parsed = parse_url($normalized);
         $path = $parsed['path'] ?? '/';
 
-        if ($scopePath !== '/' && str_starts_with($path, $scopePath)) {
-            $relative = substr($path, strlen($scopePath));
+        $trimmedScope = rtrim($scopePath, '/');
+        $trimmedPath = rtrim($path, '/');
+
+        // If the path matches the root scope itself, always name it index.html
+        if ($trimmedPath === $trimmedScope) {
+            return 'index.html';
+        }
+
+        if ($scopePath !== '/' && str_starts_with($trimmedPath.'/', $scopePath)) {
+            $relative = substr($trimmedPath.'/', strlen($scopePath));
         } else {
             $relative = ltrim($path, '/');
         }
 
-        $relative = ltrim($relative, '/');
-        if ($relative === '' || str_ends_with($relative, '/')) {
+        $relative = trim($relative, '/');
+        if ($relative === '') {
+            return 'index.html';
+        }
+
+        if (str_ends_with($relative, '/')) {
             $relative .= 'index.html';
         } elseif (! str_contains(basename($relative), '.')) {
             $relative .= '.html';
@@ -74,17 +86,19 @@ final class AssetRewriter
      * - Deactivates out-of-scope <a> links.
      * - Leaves external CDN hosts untouched.
      *
-     * @param  callable(string $assetUrl, string $localPath): void  $onAssetFound
-     * @param  callable(string $pageUrl, string $localPagePath): void  $onPageFound
+     * @param  (callable(string $assetUrl, string $localPath): void)|null  $onAssetFound
+     * @param  (callable(string $pageUrl, string $localPagePath): void)|null  $onPageFound
      */
     public function rewriteHtml(
         string $html,
         string $currentUrl,
         string $rootScopeUrl,
         string $siteId,
-        callable $onAssetFound,
-        callable $onPageFound,
+        ?callable $onAssetFound = null,
+        ?callable $onPageFound = null,
     ): string {
+        $onAssetFound ??= static function (): void {};
+        $onPageFound ??= static function (): void {};
         if (trim($html) === '') {
             return $html;
         }
@@ -115,7 +129,7 @@ final class AssetRewriter
                     continue; // Leave Google fonts / CDN as is
                 }
 
-                if ($this->isAssetUrl($resolved) || in_array($rel, ['stylesheet', 'icon', 'shortcut icon', 'apple-touch-icon', 'preload', 'manifest'], true)) {
+                if ($this->isAssetUrl($resolved) || in_array($rel, ['stylesheet', 'icon', 'shortcut icon', 'apple-touch-icon', 'preload', 'modulepreload', 'manifest'], true)) {
                     $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                     $onAssetFound($resolved, $localPath);
                     $link->setAttribute('href', $viewerPrefix.$localPath);
@@ -318,14 +332,14 @@ JS;
     /**
      * Rewrite CSS file content (handles url(...) and @import).
      *
-     * @param  callable(string $assetUrl, string $localPath): void  $onAssetFound
+     * @param  (callable(string $assetUrl, string $localPath): void)|null  $onAssetFound
      */
     public function rewriteCss(
         string $css,
         string $currentCssUrl,
         string $rootHost,
         string $siteId,
-        callable $onAssetFound,
+        ?callable $onAssetFound = null,
     ): string {
         $viewerPrefix = '/'.trim($this->routePrefix, '/').'/view/'.$siteId.'/';
 
@@ -333,15 +347,17 @@ JS;
     }
 
     /**
-     * @param  callable(string $assetUrl, string $localPath): void  $onAssetFound
+     * @param  (callable(string $assetUrl, string $localPath): void)|null  $onAssetFound
      */
     private function rewriteCssUrls(
         string $css,
         string $currentUrl,
         string $rootHost,
         string $viewerPrefix,
-        callable $onAssetFound,
+        ?callable $onAssetFound = null,
     ): string {
+        $onAssetFound ??= static function (): void {};
+
         // Regex matches url(...) with or without quotes
         return (string) preg_replace_callback(
             '/url\(\s*(?:\'([^\']+)\'|"([^"]+)"|([^)]+))\s*\)/i',

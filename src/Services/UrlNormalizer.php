@@ -143,7 +143,14 @@ final class UrlNormalizer
             return true;
         }
 
-        return str_starts_with($targetPath, $scopePath);
+        $trimmedTarget = rtrim($targetPath, '/');
+        $trimmedScope = rtrim($scopePath, '/');
+
+        if ($trimmedTarget === $trimmedScope) {
+            return true;
+        }
+
+        return str_starts_with($trimmedTarget.'/', $scopePath);
     }
 
     /**

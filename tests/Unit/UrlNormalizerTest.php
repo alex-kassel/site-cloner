@@ -43,6 +43,11 @@ final class UrlNormalizerTest extends TestCase
         // In scope
         $this->assertTrue($this->normalizer->isInScope('https://bootstrapmade.com/content/demo/AppDashboard/tables.html', $rootScope));
         $this->assertTrue($this->normalizer->isInScope('https://bootstrapmade.com/content/demo/AppDashboard/forms/elements.html', $rootScope));
+        $this->assertTrue($this->normalizer->isInScope('https://bootstrapmade.com/content/demo/AppDashboard', $rootScope));
+
+        // When root scope has no trailing slash
+        $this->assertTrue($this->normalizer->isInScope('https://laravel.com/framework/docs', 'https://laravel.com/framework/docs'));
+        $this->assertTrue($this->normalizer->isInScope('https://laravel.com/framework/docs/routing', 'https://laravel.com/framework/docs'));
 
         // Out of scope
         $this->assertFalse($this->normalizer->isInScope('https://bootstrapmade.com/content/demo/OtherDashboard/', $rootScope));

@@ -71,130 +71,130 @@ final class SiteClonerEngine
         try {
             // Process Pages & Assets while queues are not empty
             while (! empty($pageQueue) || ! empty($assetQueue)) {
-                // 1. Process Page Queue first
-                if (! empty($pageQueue)) {
-                    $pageUrl = array_key_first($pageQueue);
-                    $localPagePath = $pageQueue[$pageUrl];
-                    unset($pageQueue[$pageUrl]);
+                // 1. Process Asset Queue FIRST so stylesheets and media are downloaded immediately
+                if (! empty($assetQueue)) {
+                    $assetUrl = (string) array_key_first($assetQueue);
+                    $localAssetPath = $assetQueue[$assetUrl];
+                    unset($assetQueue[$assetUrl]);
 
-                    if (isset($visitedPages[$pageUrl])) {
+                    if (isset($visitedAssets[$assetUrl])) {
                         continue;
                     }
-                    $visitedPages[$pageUrl] = true;
+                    $visitedAssets[$assetUrl] = true;
 
-                    $manifest->currentFile = $localPagePath;
+                    // If file already exists locally, skip downloading
+                    if ($this->storage->hasFile($manifest->id, $localAssetPath)) {
+                        continue;
+                    }
+
+                    $manifest->currentFile = $localAssetPath;
                     $manifest->elapsedSeconds = time() - $startTime;
 
                     try {
-                        $response = $this->httpClient->get($pageUrl);
+                        $response = $this->httpClient->get($assetUrl);
                         $statusCode = $response->getStatusCode();
 
                         if ($statusCode >= 200 && $statusCode < 400) {
-                            $html = (string) $response->getBody();
+                            $body = (string) $response->getBody();
+                            $contentType = strtolower($response->getHeaderLine('Content-Type'));
+                            $isCss = str_contains($contentType, 'text/css') || str_ends_with(strtolower($localAssetPath), '.css');
 
-                            // Rewrite HTML and collect referenced assets & pages
-                            $rewrittenHtml = $this->assetRewriter->rewriteHtml(
-                                html: $html,
-                                currentUrl: $pageUrl,
-                                rootScopeUrl: $rootScopeUrl,
-                                siteId: $manifest->id,
-                                onAssetFound: function (string $assetUrl, string $localPath) use (&$assetQueue, $visitedAssets): void {
-                                    if (! isset($visitedAssets[$assetUrl]) && ! isset($assetQueue[$assetUrl])) {
-                                        $assetQueue[$assetUrl] = $localPath;
+                            if ($isCss) {
+                                // Parse CSS and collect embedded fonts / images
+                                $body = $this->assetRewriter->rewriteCss(
+                                    css: $body,
+                                    currentCssUrl: $assetUrl,
+                                    rootHost: $rootHost,
+                                    siteId: $manifest->id,
+                                    onAssetFound: function (string $embeddedAssetUrl, string $embeddedLocalPath) use (&$assetQueue, $visitedAssets): void {
+                                        if (! isset($visitedAssets[$embeddedAssetUrl]) && ! isset($assetQueue[$embeddedAssetUrl])) {
+                                            $assetQueue[$embeddedAssetUrl] = $embeddedLocalPath;
+                                        }
                                     }
-                                },
-                                onPageFound: function (string $newPageUrl, string $newLocalPath) use (&$pageQueue, $visitedPages): void {
-                                    $normalized = $this->urlNormalizer->normalize($newPageUrl);
-                                    if ($this->maxPages !== null && count($visitedPages) + count($pageQueue) >= $this->maxPages) {
-                                        return;
-                                    }
-                                    if (! isset($visitedPages[$normalized]) && ! isset($pageQueue[$normalized])) {
-                                        $pageQueue[$normalized] = $newLocalPath;
-                                    }
-                                }
-                            );
+                                );
+                            }
 
-                            $bytesWritten = $this->storage->saveFile($manifest->id, $localPagePath, $rewrittenHtml);
+                            $bytesWritten = $this->storage->saveFile($manifest->id, $localAssetPath, $body);
                             $manifest->filesCount++;
                             $manifest->totalBytes += $bytesWritten;
-                            $manifest->pagesCount++;
-                            $discoveredPagesList[] = $localPagePath;
-                            $manifest->pages = array_values(array_unique($discoveredPagesList));
-
-                            $this->addLog($manifest, "Страница загружена [{$statusCode}]: {$localPagePath}", 'info');
                         } elseif ($statusCode === 429) {
-                            $this->addLog($manifest, 'Лимит запросов (429) от сервера. Пауза 2с...', 'warning');
+                            $this->addLog($manifest, 'Лимит запросов (429) при загрузке ассета. Пауза 2с...', 'warning');
                             sleep(2);
                         } else {
-                            $this->addLog($manifest, "Ошибка HTTP {$statusCode} при загрузке страницы: {$pageUrl}", 'warning');
+                            $this->addLog($manifest, "Ошибка {$statusCode} при загрузке ассета: {$assetUrl}", 'warning');
                         }
                     } catch (GuzzleException $e) {
-                        $this->addLog($manifest, "Не удалось загрузить страницу {$pageUrl}: {$e->getMessage()}", 'warning');
+                        $this->addLog($manifest, "Ошибка сети при загрузке {$assetUrl}: {$e->getMessage()}", 'warning');
                     }
 
                     $this->updateProgress($manifest, $onProgress);
-                    usleep(40000);
+                    usleep(20000);
 
                     continue;
                 }
 
-                // 2. Process Asset Queue
-                $assetUrl = (string) array_key_first($assetQueue);
-                $localAssetPath = $assetQueue[$assetUrl];
-                unset($assetQueue[$assetUrl]);
+                // 2. Process Page Queue
+                $pageUrl = (string) array_key_first($pageQueue);
+                $localPagePath = $pageQueue[$pageUrl];
+                unset($pageQueue[$pageUrl]);
 
-                if (isset($visitedAssets[$assetUrl])) {
+                if (isset($visitedPages[$pageUrl])) {
                     continue;
                 }
-                $visitedAssets[$assetUrl] = true;
+                $visitedPages[$pageUrl] = true;
 
-                // If file already exists locally, skip downloading
-                if ($this->storage->hasFile($manifest->id, $localAssetPath)) {
-                    continue;
-                }
-
-                $manifest->currentFile = $localAssetPath;
+                $manifest->currentFile = $localPagePath;
                 $manifest->elapsedSeconds = time() - $startTime;
 
                 try {
-                    $response = $this->httpClient->get($assetUrl);
+                    $response = $this->httpClient->get($pageUrl);
                     $statusCode = $response->getStatusCode();
 
                     if ($statusCode >= 200 && $statusCode < 400) {
-                        $body = (string) $response->getBody();
-                        $contentType = strtolower($response->getHeaderLine('Content-Type'));
-                        $isCss = str_contains($contentType, 'text/css') || str_ends_with(strtolower($localAssetPath), '.css');
+                        $html = (string) $response->getBody();
 
-                        if ($isCss) {
-                            // Parse CSS and collect embedded fonts / images
-                            $body = $this->assetRewriter->rewriteCss(
-                                css: $body,
-                                currentCssUrl: $assetUrl,
-                                rootHost: $rootHost,
-                                siteId: $manifest->id,
-                                onAssetFound: function (string $embeddedAssetUrl, string $embeddedLocalPath) use (&$assetQueue, $visitedAssets): void {
-                                    if (! isset($visitedAssets[$embeddedAssetUrl]) && ! isset($assetQueue[$embeddedAssetUrl])) {
-                                        $assetQueue[$embeddedAssetUrl] = $embeddedLocalPath;
-                                    }
+                        // Rewrite HTML and collect referenced assets & pages
+                        $rewrittenHtml = $this->assetRewriter->rewriteHtml(
+                            html: $html,
+                            currentUrl: $pageUrl,
+                            rootScopeUrl: $rootScopeUrl,
+                            siteId: $manifest->id,
+                            onAssetFound: function (string $assetUrl, string $localPath) use (&$assetQueue, $visitedAssets): void {
+                                if (! isset($visitedAssets[$assetUrl]) && ! isset($assetQueue[$assetUrl])) {
+                                    $assetQueue[$assetUrl] = $localPath;
                                 }
-                            );
-                        }
+                            },
+                            onPageFound: function (string $newPageUrl, string $newLocalPath) use (&$pageQueue, $visitedPages): void {
+                                $normalized = $this->urlNormalizer->normalize($newPageUrl);
+                                if ($this->maxPages !== null && count($visitedPages) + count($pageQueue) >= $this->maxPages) {
+                                    return;
+                                }
+                                if (! isset($visitedPages[$normalized]) && ! isset($pageQueue[$normalized])) {
+                                    $pageQueue[$normalized] = $newLocalPath;
+                                }
+                            }
+                        );
 
-                        $bytesWritten = $this->storage->saveFile($manifest->id, $localAssetPath, $body);
+                        $bytesWritten = $this->storage->saveFile($manifest->id, $localPagePath, $rewrittenHtml);
                         $manifest->filesCount++;
                         $manifest->totalBytes += $bytesWritten;
+                        $manifest->pagesCount++;
+                        $discoveredPagesList[] = $localPagePath;
+                        $manifest->pages = array_values(array_unique($discoveredPagesList));
+
+                        $this->addLog($manifest, "Страница загружена [{$statusCode}]: {$localPagePath}", 'info');
                     } elseif ($statusCode === 429) {
-                        $this->addLog($manifest, 'Лимит запросов (429) при загрузке ассета. Пауза 2с...', 'warning');
+                        $this->addLog($manifest, 'Лимит запросов (429) от сервера. Пауза 2с...', 'warning');
                         sleep(2);
                     } else {
-                        $this->addLog($manifest, "Ошибка {$statusCode} при загрузке ассета: {$assetUrl}", 'warning');
+                        $this->addLog($manifest, "Ошибка HTTP {$statusCode} при загрузке страницы: {$pageUrl}", 'warning');
                     }
                 } catch (GuzzleException $e) {
-                    $this->addLog($manifest, "Ошибка сети при загрузке {$assetUrl}: {$e->getMessage()}", 'warning');
+                    $this->addLog($manifest, "Не удалось загрузить страницу {$pageUrl}: {$e->getMessage()}", 'warning');
                 }
 
                 $this->updateProgress($manifest, $onProgress);
-                usleep(20000);
+                usleep(40000);
             }
 
             $manifest->status = 'completed';
