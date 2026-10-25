@@ -1,0 +1,398 @@
+<?php
+
+declare(strict_types=1);
+
+namespace AlexKassel\SiteCloner\Services;
+
+final class AssetRewriter
+{
+    /**
+     * @param  array<int, string>  $externalCdnHosts
+     */
+    public function __construct(
+        private UrlNormalizer $urlNormalizer,
+        private array $externalCdnHosts = [],
+        private string $routePrefix = 'site-cloner',
+    ) {}
+
+    /**
+     * Determine local relative storage path for any asset URL.
+     */
+    public function toLocalAssetPath(string $assetUrl, string $rootHost): string
+    {
+        $normalized = $this->urlNormalizer->normalize($assetUrl);
+        $parsed = parse_url($normalized);
+        $host = strtolower($parsed['host'] ?? $rootHost);
+        $path = $parsed['path'] ?? '/asset.dat';
+
+        // Strip leading slash
+        $trimmedPath = ltrim($path, '/');
+        if ($trimmedPath === '') {
+            $trimmedPath = 'index.html';
+        }
+
+        // If from another host, namespace it under _external/{host}/...
+        if ($host !== strtolower($rootHost)) {
+            $safeHost = preg_replace('/[^a-z0-9\.\-]+/', '_', $host) ?? 'external';
+
+            return '_external/'.$safeHost.'/'.$trimmedPath;
+        }
+
+        return $trimmedPath;
+    }
+
+    /**
+     * Determine local relative path for an in-scope HTML page URL.
+     */
+    public function toLocalPagePath(string $pageUrl, string $rootScopeUrl): string
+    {
+        $scopePath = $this->urlNormalizer->getScopePath($rootScopeUrl);
+        $normalized = $this->urlNormalizer->normalize($pageUrl);
+        $parsed = parse_url($normalized);
+        $path = $parsed['path'] ?? '/';
+
+        if ($scopePath !== '/' && str_starts_with($path, $scopePath)) {
+            $relative = substr($path, strlen($scopePath));
+        } else {
+            $relative = ltrim($path, '/');
+        }
+
+        $relative = ltrim($relative, '/');
+        if ($relative === '' || str_ends_with($relative, '/')) {
+            $relative .= 'index.html';
+        } elseif (! str_contains(basename($relative), '.')) {
+            $relative .= '.html';
+        }
+
+        return $relative;
+    }
+
+    /**
+     * Rewrite HTML document:
+     * - Discovers and rewrites all assets (<link>, <script>, <img>, <svg><use>, audio, video, source).
+     * - Discovers and rewrites in-scope <a> links.
+     * - Deactivates out-of-scope <a> links.
+     * - Leaves external CDN hosts untouched.
+     *
+     * @param  callable(string $assetUrl, string $localPath): void  $onAssetFound
+     * @param  callable(string $pageUrl, string $localPagePath): void  $onPageFound
+     */
+    public function rewriteHtml(
+        string $html,
+        string $currentUrl,
+        string $rootScopeUrl,
+        string $siteId,
+        callable $onAssetFound,
+        callable $onPageFound,
+    ): string {
+        if (trim($html) === '') {
+            return $html;
+        }
+
+        $rootHost = (string) parse_url($rootScopeUrl, PHP_URL_HOST);
+        $viewerPrefix = '/'.trim($this->routePrefix, '/').'/view/'.$siteId.'/';
+
+        // Use DomCrawler / DOMDocument for robust traversal
+        $dom = new \DOMDocument;
+        // Suppress HTML5 parsing warnings
+        $internalErrors = libxml_use_internal_errors(true);
+        $encodedHtml = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        @$dom->loadHTML($encodedHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_use_internal_errors($internalErrors);
+
+        $xpath = new \DOMXPath($dom);
+
+        // 1. Process Stylesheets & Preloads (<link>)
+        $links = $xpath->query('//link[@href]');
+        if ($links !== false) {
+            /** @var \DOMElement $link */
+            foreach ($links as $link) {
+                $rawHref = $link->getAttribute('href');
+                $rel = strtolower($link->getAttribute('rel'));
+                $resolved = $this->urlNormalizer->resolve($rawHref, $currentUrl);
+
+                if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                    continue; // Leave Google fonts / CDN as is
+                }
+
+                if ($this->isAssetUrl($resolved) || in_array($rel, ['stylesheet', 'icon', 'shortcut icon', 'apple-touch-icon', 'preload', 'manifest'], true)) {
+                    $localPath = $this->toLocalAssetPath($resolved, $rootHost);
+                    $onAssetFound($resolved, $localPath);
+                    $link->setAttribute('href', $viewerPrefix.$localPath);
+                }
+            }
+        }
+
+        // 2. Process Scripts (<script src="...">)
+        $scripts = $xpath->query('//script[@src]');
+        if ($scripts !== false) {
+            /** @var \DOMElement $script */
+            foreach ($scripts as $script) {
+                $rawSrc = $script->getAttribute('src');
+                $resolved = $this->urlNormalizer->resolve($rawSrc, $currentUrl);
+
+                if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                    continue;
+                }
+
+                $localPath = $this->toLocalAssetPath($resolved, $rootHost);
+                $onAssetFound($resolved, $localPath);
+                $script->setAttribute('src', $viewerPrefix.$localPath);
+            }
+        }
+
+        // 3. Process Images, Media, Sources, Embeds, iframes
+        $mediaQueries = [
+            '//img[@src]' => 'src',
+            '//source[@src]' => 'src',
+            '//video[@src]' => 'src',
+            '//audio[@src]' => 'src',
+            '//track[@src]' => 'src',
+            '//embed[@src]' => 'src',
+            '//input[@src]' => 'src',
+        ];
+
+        foreach ($mediaQueries as $query => $attr) {
+            $elements = $xpath->query($query);
+            if ($elements !== false) {
+                /** @var \DOMElement $element */
+                foreach ($elements as $element) {
+                    $raw = $element->getAttribute($attr);
+                    $resolved = $this->urlNormalizer->resolve($raw, $currentUrl);
+
+                    if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                        continue;
+                    }
+
+                    $localPath = $this->toLocalAssetPath($resolved, $rootHost);
+                    $onAssetFound($resolved, $localPath);
+                    $element->setAttribute($attr, $viewerPrefix.$localPath);
+                }
+            }
+        }
+
+        // Handle srcset on <img> and <source>
+        $srcsetElements = $xpath->query('//*[@srcset]');
+        if ($srcsetElements !== false) {
+            /** @var \DOMElement $element */
+            foreach ($srcsetElements as $element) {
+                $rawSrcset = $element->getAttribute('srcset');
+                $parts = explode(',', $rawSrcset);
+                $rewrittenParts = [];
+
+                foreach ($parts as $part) {
+                    $part = trim($part);
+                    if ($part === '') {
+                        continue;
+                    }
+                    $tokens = preg_split('/\s+/', $part);
+                    $src = $tokens[0] ?? '';
+                    $descriptor = isset($tokens[1]) ? ' '.$tokens[1] : '';
+
+                    if ($src !== '') {
+                        $resolved = $this->urlNormalizer->resolve($src, $currentUrl);
+                        if (! $this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                            $localPath = $this->toLocalAssetPath($resolved, $rootHost);
+                            $onAssetFound($resolved, $localPath);
+                            $src = $viewerPrefix.$localPath;
+                        }
+                    }
+                    $rewrittenParts[] = $src.$descriptor;
+                }
+
+                $element->setAttribute('srcset', implode(', ', $rewrittenParts));
+            }
+        }
+
+        // 4. Process SVG <use href="..." / xlink:href="...">
+        $svgUses = $xpath->query('//*[local-name()="use"]');
+        if ($svgUses !== false) {
+            /** @var \DOMElement $use */
+            foreach ($svgUses as $use) {
+                $hrefAttr = $use->hasAttribute('href') ? 'href' : ($use->hasAttribute('xlink:href') ? 'xlink:href' : null);
+                if ($hrefAttr !== null) {
+                    $raw = $use->getAttribute($hrefAttr);
+                    if ($raw !== '' && ! str_starts_with($raw, '#')) {
+                        // e.g. "assets/icons.svg#arrow"
+                        $hashPos = strpos($raw, '#');
+                        $frag = $hashPos !== false ? substr($raw, $hashPos) : '';
+                        $cleanUrl = $hashPos !== false ? substr($raw, 0, $hashPos) : $raw;
+
+                        $resolved = $this->urlNormalizer->resolve($cleanUrl, $currentUrl);
+                        if (! $this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                            $localPath = $this->toLocalAssetPath($resolved, $rootHost);
+                            $onAssetFound($resolved, $localPath);
+                            $use->setAttribute($hrefAttr, $viewerPrefix.$localPath.$frag);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 5. Process Anchor Links (<a href="...">)
+        $anchors = $xpath->query('//a[@href]');
+        if ($anchors !== false) {
+            /** @var \DOMElement $anchor */
+            foreach ($anchors as $anchor) {
+                $rawHref = $anchor->getAttribute('href');
+                $trimmed = trim($rawHref);
+
+                if ($trimmed === '' || str_starts_with($trimmed, '#') || str_starts_with($trimmed, 'javascript:') || str_starts_with($trimmed, 'mailto:') || str_starts_with($trimmed, 'tel:')) {
+                    continue;
+                }
+
+                $resolved = $this->urlNormalizer->resolve($trimmed, $currentUrl);
+                $normalized = $this->urlNormalizer->normalize($resolved);
+
+                // If link points directly to an asset (e.g. PDF, ZIP, image)
+                if ($this->isAssetUrl($normalized)) {
+                    $localPath = $this->toLocalAssetPath($normalized, $rootHost);
+                    $onAssetFound($normalized, $localPath);
+                    $anchor->setAttribute('href', $viewerPrefix.$localPath);
+
+                    continue;
+                }
+
+                // Check if the page is in scope
+                if ($this->urlNormalizer->isInScope($normalized, $rootScopeUrl)) {
+                    $localPagePath = $this->toLocalPagePath($normalized, $rootScopeUrl);
+                    $onPageFound($normalized, $localPagePath);
+                    $anchor->setAttribute('href', $viewerPrefix.$localPagePath);
+                } else {
+                    // Out of scope: Deactivate link per user decision #4
+                    $anchor->setAttribute('href', 'javascript:void(0)');
+                    $anchor->setAttribute('data-site-cloner-disabled', 'true');
+                    $anchor->setAttribute('data-original-href', $resolved);
+                    $anchor->setAttribute('title', 'Ссылка за пределами скачанного пути: '.$resolved);
+                    $anchor->setAttribute('onclick', 'window.__siteClonerShowNotice && window.__siteClonerShowNotice(this, event)');
+                }
+            }
+        }
+
+        // 6. Process inline styles with url(...)
+        $styledElements = $xpath->query('//*[@style]');
+        if ($styledElements !== false) {
+            /** @var \DOMElement $el */
+            foreach ($styledElements as $el) {
+                $style = $el->getAttribute('style');
+                if (str_contains($style, 'url(')) {
+                    $rewrittenStyle = $this->rewriteCssUrls($style, $currentUrl, $rootHost, $viewerPrefix, $onAssetFound);
+                    $el->setAttribute('style', $rewrittenStyle);
+                }
+            }
+        }
+
+        // 7. Inject Viewer Notice Script into <body>
+        $scriptTag = $dom->createElement('script');
+        $scriptTag->nodeValue = <<<'JS'
+window.__siteClonerShowNotice = function(el, ev) {
+    if (ev) ev.preventDefault();
+    var href = el.getAttribute('data-original-href') || 'внешняя ссылка';
+    var toast = document.getElementById('__site_cloner_toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = '__site_cloner_toast';
+        toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;font-family:sans-serif;font-size:13px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:999999;transition:opacity 0.3s;max-width:90%;text-align:center;border:1px solid #374151;';
+        document.body.appendChild(toast);
+    }
+    toast.innerHTML = '⚠️ <strong>Действие заблокировано:</strong> Ссылка находится за пределами скачанного пути:<br><span style="color:#93c5fd;word-break:break-all;">' + href + '</span>';
+    toast.style.opacity = '1';
+    toast.style.display = 'block';
+    clearTimeout(window.__toastTimeout);
+    window.__toastTimeout = setTimeout(function() {
+        toast.style.opacity = '0';
+        setTimeout(function() { toast.style.display = 'none'; }, 300);
+    }, 4000);
+};
+JS;
+        $body = $dom->getElementsByTagName('body')->item(0);
+        if ($body !== null) {
+            $body->appendChild($scriptTag);
+        }
+
+        $savedHtml = $dom->saveHTML();
+
+        return $savedHtml !== false ? $savedHtml : $html;
+    }
+
+    /**
+     * Rewrite CSS file content (handles url(...) and @import).
+     *
+     * @param  callable(string $assetUrl, string $localPath): void  $onAssetFound
+     */
+    public function rewriteCss(
+        string $css,
+        string $currentCssUrl,
+        string $rootHost,
+        string $siteId,
+        callable $onAssetFound,
+    ): string {
+        $viewerPrefix = '/'.trim($this->routePrefix, '/').'/view/'.$siteId.'/';
+
+        return $this->rewriteCssUrls($css, $currentCssUrl, $rootHost, $viewerPrefix, $onAssetFound);
+    }
+
+    /**
+     * @param  callable(string $assetUrl, string $localPath): void  $onAssetFound
+     */
+    private function rewriteCssUrls(
+        string $css,
+        string $currentUrl,
+        string $rootHost,
+        string $viewerPrefix,
+        callable $onAssetFound,
+    ): string {
+        // Regex matches url(...) with or without quotes
+        return (string) preg_replace_callback(
+            '/url\(\s*(?:\'([^\']+)\'|"([^"]+)"|([^)]+))\s*\)/i',
+            function (array $matches) use ($currentUrl, $rootHost, $viewerPrefix, $onAssetFound): string {
+                $raw = '';
+                if (! empty($matches[1])) {
+                    $raw = $matches[1];
+                } elseif (! empty($matches[2])) {
+                    $raw = $matches[2];
+                } elseif (! empty($matches[3])) {
+                    $raw = $matches[3];
+                }
+                $raw = trim($raw);
+
+                if ($raw === '' || str_starts_with($raw, 'data:') || str_starts_with($raw, '#')) {
+                    return $matches[0];
+                }
+
+                // Strip hash fragment if present for downloading, but keep it in url if needed
+                $hashPos = strpos($raw, '#');
+                $frag = $hashPos !== false ? substr($raw, $hashPos) : '';
+                $cleanRaw = $hashPos !== false ? substr($raw, 0, $hashPos) : $raw;
+
+                $resolved = $this->urlNormalizer->resolve($cleanRaw, $currentUrl);
+
+                if ($this->urlNormalizer->isExternalCdn($resolved, $this->externalCdnHosts)) {
+                    return 'url("'.$resolved.$frag.'")';
+                }
+
+                $localPath = $this->toLocalAssetPath($resolved, $rootHost);
+                $onAssetFound($resolved, $localPath);
+
+                return 'url("'.$viewerPrefix.$localPath.$frag.'")';
+            },
+            $css
+        );
+    }
+
+    private function isAssetUrl(string $url): bool
+    {
+        $path = strtolower((string) parse_url($url, PHP_URL_PATH));
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+
+        $assetExtensions = [
+            'css', 'js', 'json', 'xml',
+            'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'tiff', 'avif',
+            'woff', 'woff2', 'ttf', 'eot', 'otf',
+            'mp4', 'webm', 'ogg', 'mp3', 'wav', 'flac',
+            'pdf', 'zip', 'tar', 'gz', 'map',
+        ];
+
+        return in_array($ext, $assetExtensions, true);
+    }
+}
