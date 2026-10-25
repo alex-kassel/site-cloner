@@ -112,6 +112,7 @@ final class SiteClonerEngine
                                         }
                                     },
                                     downloadMode: $manifest->downloadMode,
+                                    currentCssLocalPath: $localAssetPath,
                                 );
                             }
 
@@ -175,6 +176,7 @@ final class SiteClonerEngine
                                 }
                             },
                             downloadMode: $manifest->downloadMode,
+                            currentPageLocalPath: $localPagePath,
                         );
 
                         $bytesWritten = $this->storage->saveFile($manifest->id, $localPagePath, $rewrittenHtml);

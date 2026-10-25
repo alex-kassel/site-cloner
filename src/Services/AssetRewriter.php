@@ -12,7 +12,6 @@ final class AssetRewriter
     public function __construct(
         private UrlNormalizer $urlNormalizer,
         private array $externalCdnHosts = [],
-        private string $routePrefix = 'site-cloner',
     ) {}
 
     /**
@@ -80,6 +79,36 @@ final class AssetRewriter
     }
 
     /**
+     * Compute relative path from one file within the site to another.
+     */
+    public function getRelativePath(string $fromPath, string $toPath): string
+    {
+        $fromPath = trim(str_replace('\\', '/', $fromPath), '/');
+        $toPath = trim(str_replace('\\', '/', $toPath), '/');
+
+        if ($fromPath === $toPath) {
+            return basename($toPath);
+        }
+
+        $fromDir = dirname($fromPath);
+        if ($fromDir === '.' || $fromDir === '') {
+            return $toPath;
+        }
+
+        $fromParts = explode('/', $fromDir);
+        $toParts = explode('/', $toPath);
+
+        while (count($fromParts) > 0 && count($toParts) > 0 && $fromParts[0] === $toParts[0]) {
+            array_shift($fromParts);
+            array_shift($toParts);
+        }
+
+        $prefix = str_repeat('../', count($fromParts));
+
+        return $prefix.implode('/', $toParts);
+    }
+
+    /**
      * Rewrite HTML document:
      * - Discovers and rewrites all assets (<link>, <script>, <img>, <svg><use>, audio, video, source).
      * - Discovers and rewrites in-scope <a> links.
@@ -97,6 +126,7 @@ final class AssetRewriter
         ?callable $onAssetFound = null,
         ?callable $onPageFound = null,
         string $downloadMode = 'light',
+        ?string $currentPageLocalPath = null,
     ): string {
         $onAssetFound ??= static function (): void {};
         $onPageFound ??= static function (): void {};
@@ -105,7 +135,7 @@ final class AssetRewriter
         }
 
         $rootHost = (string) parse_url($rootScopeUrl, PHP_URL_HOST);
-        $viewerPrefix = '/'.trim($this->routePrefix, '/').'/view/'.$siteId.'/';
+        $currentPageLocalPath ??= $this->toLocalPagePath($currentUrl, $rootScopeUrl);
 
         // Use DomCrawler / DOMDocument for robust traversal
         $dom = new \DOMDocument;
@@ -116,6 +146,15 @@ final class AssetRewriter
         libxml_use_internal_errors($internalErrors);
 
         $xpath = new \DOMXPath($dom);
+
+        // Remove any <base> tag so relative paths resolve cleanly against the document location
+        $baseTags = $xpath->query('//base');
+        if ($baseTags !== false) {
+            /** @var \DOMElement $baseTag */
+            foreach ($baseTags as $baseTag) {
+                $baseTag->parentNode?->removeChild($baseTag);
+            }
+        }
 
         // 1. Process Stylesheets & Preloads (<link>)
         $links = $xpath->query('//link[@href]');
@@ -133,7 +172,7 @@ final class AssetRewriter
                 if ($this->isAssetUrl($resolved) || in_array($rel, ['stylesheet', 'icon', 'shortcut icon', 'apple-touch-icon', 'preload', 'modulepreload', 'manifest'], true)) {
                     $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                     $onAssetFound($resolved, $localPath);
-                    $link->setAttribute('href', $viewerPrefix.$localPath);
+                    $link->setAttribute('href', $this->getRelativePath($currentPageLocalPath, $localPath));
                 }
             }
         }
@@ -152,7 +191,7 @@ final class AssetRewriter
 
                 $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                 $onAssetFound($resolved, $localPath);
-                $script->setAttribute('src', $viewerPrefix.$localPath);
+                $script->setAttribute('src', $this->getRelativePath($currentPageLocalPath, $localPath));
             }
         }
 
@@ -160,7 +199,7 @@ final class AssetRewriter
         $mediaQueries = [
             '//img[@src]' => 'src',
             '//source[@src]' => 'src',
-            '//video[@src]' => 'src',
+            '//video[@src]' => 'video',
             '//audio[@src]' => 'src',
             '//track[@src]' => 'src',
             '//embed[@src]' => 'src',
@@ -181,7 +220,7 @@ final class AssetRewriter
 
                     $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                     $onAssetFound($resolved, $localPath);
-                    $element->setAttribute($attr, $viewerPrefix.$localPath);
+                    $element->setAttribute($attr, $this->getRelativePath($currentPageLocalPath, $localPath));
                 }
             }
         }
@@ -209,7 +248,7 @@ final class AssetRewriter
                         if ($this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
                             $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                             $onAssetFound($resolved, $localPath);
-                            $src = $viewerPrefix.$localPath;
+                            $src = $this->getRelativePath($currentPageLocalPath, $localPath);
                         }
                     }
                     $rewrittenParts[] = $src.$descriptor;
@@ -237,7 +276,7 @@ final class AssetRewriter
                         if ($this->shouldDownloadAsset($resolved, $rootHost, $downloadMode)) {
                             $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                             $onAssetFound($resolved, $localPath);
-                            $use->setAttribute($hrefAttr, $viewerPrefix.$localPath.$frag);
+                            $use->setAttribute($hrefAttr, $this->getRelativePath($currentPageLocalPath, $localPath).$frag);
                         }
                     }
                 }
@@ -263,7 +302,7 @@ final class AssetRewriter
                 if ($this->isAssetUrl($normalized)) {
                     $localPath = $this->toLocalAssetPath($normalized, $rootHost);
                     $onAssetFound($normalized, $localPath);
-                    $anchor->setAttribute('href', $viewerPrefix.$localPath);
+                    $anchor->setAttribute('href', $this->getRelativePath($currentPageLocalPath, $localPath));
 
                     continue;
                 }
@@ -272,7 +311,7 @@ final class AssetRewriter
                 if ($this->urlNormalizer->isInScope($normalized, $rootScopeUrl)) {
                     $localPagePath = $this->toLocalPagePath($normalized, $rootScopeUrl);
                     $onPageFound($normalized, $localPagePath);
-                    $anchor->setAttribute('href', $viewerPrefix.$localPagePath);
+                    $anchor->setAttribute('href', $this->getRelativePath($currentPageLocalPath, $localPagePath));
                 } else {
                     // Out of scope: Deactivate link per user decision #4
                     $anchor->setAttribute('href', 'javascript:void(0)');
@@ -291,8 +330,20 @@ final class AssetRewriter
             foreach ($styledElements as $el) {
                 $style = $el->getAttribute('style');
                 if (str_contains($style, 'url(')) {
-                    $rewrittenStyle = $this->rewriteCssUrls($style, $currentUrl, $rootHost, $viewerPrefix, $onAssetFound, $downloadMode);
+                    $rewrittenStyle = $this->rewriteCssUrls($style, $currentUrl, $rootHost, $currentPageLocalPath, $onAssetFound, $downloadMode);
                     $el->setAttribute('style', $rewrittenStyle);
+                }
+            }
+        }
+
+        // Process <style> tags
+        $styleElements = $xpath->query('//style');
+        if ($styleElements !== false) {
+            /** @var \DOMElement $styleEl */
+            foreach ($styleElements as $styleEl) {
+                $content = $styleEl->nodeValue ?? '';
+                if (str_contains($content, 'url(')) {
+                    $styleEl->nodeValue = $this->rewriteCssUrls($content, $currentUrl, $rootHost, $currentPageLocalPath, $onAssetFound, $downloadMode);
                 }
             }
         }
@@ -342,10 +393,12 @@ JS;
         string $siteId,
         ?callable $onAssetFound = null,
         string $downloadMode = 'light',
+        ?string $currentCssLocalPath = null,
     ): string {
-        $viewerPrefix = '/'.trim($this->routePrefix, '/').'/view/'.$siteId.'/';
+        $onAssetFound ??= static function (): void {};
+        $currentCssLocalPath ??= $this->toLocalAssetPath($currentCssUrl, $rootHost);
 
-        return $this->rewriteCssUrls($css, $currentCssUrl, $rootHost, $viewerPrefix, $onAssetFound, $downloadMode);
+        return $this->rewriteCssUrls($css, $currentCssUrl, $rootHost, $currentCssLocalPath, $onAssetFound, $downloadMode);
     }
 
     /**
@@ -355,7 +408,7 @@ JS;
         string $css,
         string $currentUrl,
         string $rootHost,
-        string $viewerPrefix,
+        string $sourceLocalPath,
         ?callable $onAssetFound = null,
         string $downloadMode = 'light',
     ): string {
@@ -364,7 +417,7 @@ JS;
         // Regex matches url(...) with or without quotes
         return (string) preg_replace_callback(
             '/url\(\s*(?:\'([^\']+)\'|"([^"]+)"|([^)]+))\s*\)/i',
-            function (array $matches) use ($currentUrl, $rootHost, $viewerPrefix, $onAssetFound, $downloadMode): string {
+            function (array $matches) use ($currentUrl, $rootHost, $sourceLocalPath, $onAssetFound, $downloadMode): string {
                 $raw = '';
                 if (! empty($matches[1])) {
                     $raw = $matches[1];
@@ -393,7 +446,7 @@ JS;
                 $localPath = $this->toLocalAssetPath($resolved, $rootHost);
                 $onAssetFound($resolved, $localPath);
 
-                return 'url("'.$viewerPrefix.$localPath.$frag.'")';
+                return 'url("'.$this->getRelativePath($sourceLocalPath, $localPath).$frag.'")';
             },
             $css
         );

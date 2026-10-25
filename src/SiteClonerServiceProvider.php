@@ -33,7 +33,6 @@ class SiteClonerServiceProvider extends ServiceProvider
             return new AssetRewriter(
                 urlNormalizer: $app->make(UrlNormalizer::class),
                 externalCdnHosts: (array) config('site-cloner.external_cdn_hosts', []),
-                routePrefix: (string) config('site-cloner.route_prefix', 'site-cloner')
             );
         });
 

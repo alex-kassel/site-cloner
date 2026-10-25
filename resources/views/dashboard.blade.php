@@ -335,7 +335,7 @@
                         <template x-if="site.status === 'completed'">
                             <div class="flex items-center gap-2.5 pt-3.5 border-t border-sand-200">
                                 <!-- Open in viewer -->
-                                <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
+                                <a :href="'/' + routePrefix + '/view/' + site.id + '/'" target="_blank"
                                    class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
                                     <span>Открыть сайт</span>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -486,7 +486,7 @@
 
                             <template x-if="site.status === 'completed'">
                                 <div class="flex items-center gap-2">
-                                    <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
+                                    <a :href="'/' + routePrefix + '/view/' + site.id + '/'" target="_blank"
                                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
                                         <span>Открыть</span>
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -789,7 +789,7 @@
                 <button @click="duplicateModal = null" class="px-3.5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-sm font-heading font-medium transition">
                     Отмена
                 </button>
-                <a :href="'/' + routePrefix + '/view/' + (duplicateModal ? duplicateModal.id : '')" target="_blank"
+                <a :href="'/' + routePrefix + '/view/' + (duplicateModal ? duplicateModal.id : '') + '/'" target="_blank"
                    @click="duplicateModal = null"
                    class="px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition">
                     Открыть

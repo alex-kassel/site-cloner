@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexKassel\SiteCloner\Http\Controllers;
 
 use AlexKassel\SiteCloner\Services\SiteStorage;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -14,8 +15,13 @@ final class ViewerController
         private SiteStorage $storage,
     ) {}
 
-    public function serve(string $siteId, ?string $path = null): Response
+    public function serve(Request $request, string $siteId, ?string $path = null): Response
     {
+        // If viewing root without trailing slash, redirect to trailing slash so relative assets resolve properly
+        if (($path === null || $path === '') && ! str_ends_with($request->getPathInfo(), '/')) {
+            return redirect()->to($request->getPathInfo().'/', 301);
+        }
+
         $path = $path ?? 'index.html';
         $path = ltrim($path, '/');
 

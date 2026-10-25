@@ -18,7 +18,6 @@ final class AssetRewriterTest extends TestCase
         $this->rewriter = new AssetRewriter(
             urlNormalizer: new UrlNormalizer,
             externalCdnHosts: ['fonts.googleapis.com'],
-            routePrefix: 'site-cloner'
         );
     }
 
@@ -56,16 +55,16 @@ HTML;
             }
         );
 
-        // Assets should point to viewer prefix
-        $this->assertStringContainsString('/site-cloner/view/test-site/content/demo/assets/css/style.css', $rewritten);
-        $this->assertStringContainsString('/site-cloner/view/test-site/common/js/app.js', $rewritten);
-        $this->assertStringContainsString('/site-cloner/view/test-site/content/demo/AppDashboard/img/logo.png', $rewritten);
+        // Assets should be relative paths for offline file:// and web server compatibility
+        $this->assertStringContainsString('href="content/demo/assets/css/style.css"', $rewritten);
+        $this->assertStringContainsString('src="common/js/app.js"', $rewritten);
+        $this->assertStringContainsString('src="content/demo/AppDashboard/img/logo.png"', $rewritten);
 
         // Google Fonts should remain untouched
         $this->assertStringContainsString('https://fonts.googleapis.com/css?family=Open+Sans', $rewritten);
 
-        // In-scope page should be rewritten and registered
-        $this->assertStringContainsString('/site-cloner/view/test-site/tables.html', $rewritten);
+        // In-scope page should be rewritten as relative path and registered
+        $this->assertStringContainsString('href="tables.html"', $rewritten);
         $this->assertArrayHasKey('https://bootstrapmade.com/content/demo/AppDashboard/tables.html', $discoveredPages);
 
         // Out-of-scope link should be deactivated with data attributes
@@ -97,8 +96,8 @@ CSS;
             }
         );
 
-        $this->assertStringContainsString('/site-cloner/view/test-site/assets/fonts/fontawesome-webfont.woff2', $rewritten);
-        $this->assertStringContainsString('/site-cloner/view/test-site/assets/img/hero-bg.jpg', $rewritten);
+        $this->assertStringContainsString('url("../fonts/fontawesome-webfont.woff2")', $rewritten);
+        $this->assertStringContainsString('url("../img/hero-bg.jpg")', $rewritten);
     }
 
     public function test_it_maps_scope_root_without_trailing_slash_to_index_html(): void
@@ -108,6 +107,14 @@ CSS;
 
         $subPath = $this->rewriter->toLocalPagePath('https://laravel.com/framework/docs/routing', 'https://laravel.com/framework/docs');
         $this->assertSame('routing.html', $subPath);
+    }
+
+    public function test_it_computes_relative_paths(): void
+    {
+        $this->assertSame('css/style.css', $this->rewriter->getRelativePath('index.html', 'css/style.css'));
+        $this->assertSame('../css/style.css', $this->rewriter->getRelativePath('docs/guide.html', 'css/style.css'));
+        $this->assertSame('../../css/style.css', $this->rewriter->getRelativePath('docs/sub/page.html', 'css/style.css'));
+        $this->assertSame('fonts/icon.woff', $this->rewriter->getRelativePath('content/vendors/icons/icons.css', 'content/vendors/icons/fonts/icon.woff'));
     }
 
     public function test_it_rewrites_modulepreload_links(): void
@@ -120,7 +127,7 @@ CSS;
             siteId: 'laravel-site'
         );
 
-        $this->assertStringContainsString('/site-cloner/view/laravel-site/build/assets/app-123.js', $rewritten);
+        $this->assertStringContainsString('href="build/assets/app-123.js"', $rewritten);
     }
 
     public function test_light_mode_keeps_external_cdn_links_untouched(): void
@@ -156,7 +163,7 @@ HTML;
         $this->assertArrayNotHasKey('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css', $discoveredAssets);
 
         // Local asset should still be rewritten and discovered
-        $this->assertStringContainsString('/site-cloner/view/test-site/assets/css/local-style.css', $rewritten);
+        $this->assertStringContainsString('href="assets/css/local-style.css"', $rewritten);
         $this->assertArrayHasKey('https://example.com/assets/css/local-style.css', $discoveredAssets);
     }
 
@@ -176,7 +183,7 @@ HTML;
             downloadMode: 'full'
         );
 
-        $this->assertStringContainsString('/site-cloner/view/test-site/_external/cdn.jsdelivr.net/npm/bootstrap.js', $rewritten);
+        $this->assertStringContainsString('src="_external/cdn.jsdelivr.net/npm/bootstrap.js"', $rewritten);
         $this->assertArrayHasKey('https://cdn.jsdelivr.net/npm/bootstrap.js', $discoveredAssets);
     }
 }
