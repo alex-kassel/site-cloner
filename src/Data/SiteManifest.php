@@ -95,6 +95,10 @@ final class SiteManifest
         $i = (int) floor(log($bytes, 1024));
         $i = min($i, count($units) - 1);
 
-        return sprintf('%.2f %s', $bytes / pow(1024, $i), $units[$i]);
+        $val = $bytes / pow(1024, $i);
+        $precision = $val >= 100 ? 1 : 2;
+        $formatted = rtrim(rtrim(sprintf('%.'.$precision.'f', $val), '0'), '.');
+
+        return $formatted.' '.$units[$i];
     }
 }

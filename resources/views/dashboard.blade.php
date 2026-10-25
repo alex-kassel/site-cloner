@@ -127,7 +127,7 @@
                         <div class="relative flex-1">
                             <input type="url"
                                    x-model="inputUrl"
-                                   placeholder="https://bootstrapmade.com/content/demo/Horizon/"
+                                   placeholder="https://laravel.com/framework/docs"
                                    required
                                    class="w-full bg-white border border-sand-300 rounded-xl px-4 py-3.5 text-base text-ink-900 placeholder-ink-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand-100 transition shadow-inner">
                         </div>
@@ -154,14 +154,14 @@
                                 <button type="button"
                                         @click="downloadMode = 'light'"
                                         :class="downloadMode === 'light' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
-                                    <span>⚡ Легкий (для верстки)</span>
+                                        class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
+                                    <span>⚡ Лёгкий</span>
                                 </button>
                                 <button type="button"
                                         @click="downloadMode = 'full'"
                                         :class="downloadMode === 'full' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
-                                        class="px-3 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
-                                    <span>✈️ Полный (режим самолёта)</span>
+                                        class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
+                                    <span>✈️ Полный</span>
                                 </button>
                             </div>
                         </div>
@@ -268,21 +268,43 @@
                     <p class="text-sm text-ink-400">Сохраненные локальные копии сайтов</p>
                 </div>
 
-                <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="flex items-center gap-2.5 w-full sm:w-auto">
                     <!-- Search -->
-                    <div class="relative flex-1 sm:w-64">
+                    <div class="relative flex-1 sm:w-56">
                         <input type="text"
                                x-model="searchQuery"
                                placeholder="Поиск по сайтам..."
-                               class="w-full bg-white border border-sand-300 rounded-lg px-3.5 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-100">
+                               class="w-full bg-white border border-sand-300 rounded-xl px-3.5 py-2 text-sm text-ink-900 placeholder-ink-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-100">
                     </div>
 
                     <!-- Sort -->
-                    <select x-model="sortBy" class="bg-white border border-sand-300 rounded-lg px-3.5 py-2 text-sm text-ink-600 focus:outline-none focus:border-brand">
+                    <select x-model="sortBy" class="bg-white border border-sand-300 rounded-xl px-3 py-2 text-sm text-ink-600 focus:outline-none focus:border-brand">
                         <option value="latest">По дате</option>
                         <option value="size">По размеру</option>
                         <option value="name">По имени</option>
                     </select>
+
+                    <!-- Grid / List Switcher -->
+                    <div class="inline-flex p-1 bg-sand-100 rounded-xl shrink-0">
+                        <button type="button"
+                                @click="viewMode = 'grid'"
+                                :class="viewMode === 'grid' ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-400 hover:text-ink-700'"
+                                class="p-2 rounded-lg transition"
+                                title="Сетка">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                        </button>
+                        <button type="button"
+                                @click="viewMode = 'list'"
+                                :class="viewMode === 'list' ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-400 hover:text-ink-700'"
+                                class="p-2 rounded-lg transition"
+                                title="Список">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -295,7 +317,7 @@
             </template>
 
             <!-- Sites Grid (Generous, readable Horizon-styled cards) -->
-            <div x-show="filteredSites.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div x-show="filteredSites.length > 0 && viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <template x-for="site in filteredSites" :key="site.id">
                     <div class="bg-white border border-sand-200 rounded-2xl p-6 flex flex-col justify-between hover:border-brand-200 hover:shadow-md transition duration-200 space-y-4 shadow-sm group">
 
@@ -316,19 +338,19 @@
                                 </div>
                             </div>
 
-                            <!-- Metrics row -->
-                            <div class="grid grid-cols-3 gap-2.5 bg-sand-50 p-3.5 rounded-xl border border-sand-200 text-center">
-                                <div>
+                            <!-- Metrics row with guaranteed single-line sizes -->
+                            <div class="grid grid-cols-3 gap-2 bg-sand-50 p-3 rounded-xl border border-sand-200 text-center">
+                                <div class="min-w-0">
                                     <span class="text-xs text-ink-400 block font-medium">Размер</span>
-                                    <span class="text-sm sm:text-base font-bold font-mono text-brand" x-text="site.human_size"></span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-brand whitespace-nowrap truncate block" x-text="site.human_size"></span>
                                 </div>
-                                <div>
+                                <div class="min-w-0">
                                     <span class="text-xs text-ink-400 block font-medium">Файлов</span>
-                                    <span class="text-sm sm:text-base font-bold font-mono text-ink-900" x-text="site.files_count"></span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-ink-900 whitespace-nowrap truncate block" x-text="site.files_count"></span>
                                 </div>
-                                <div>
+                                <div class="min-w-0">
                                     <span class="text-xs text-ink-400 block font-medium">Страниц</span>
-                                    <span class="text-sm sm:text-base font-bold font-mono text-emerald-700" x-text="site.pages_count"></span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-emerald-700 whitespace-nowrap truncate block" x-text="site.pages_count"></span>
                                 </div>
                             </div>
 
@@ -338,48 +360,193 @@
                             </div>
                         </div>
 
-                        <!-- Card Action Buttons -->
+                        <!-- Card Action Buttons: Clean 2-button layout with Dropdown -->
                         <div class="flex items-center gap-2.5 pt-3.5 border-t border-sand-200">
                             <!-- Open in viewer -->
                             <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
-                               class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20">
+                               class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
                                 <span>Открыть сайт</span>
-                            </a>
-
-                            <!-- Inspect pages modal -->
-                            <button @click="openPagesModal(site)"
-                                    class="px-3.5 py-2.5 bg-sand-50 hover:bg-sand-100 border border-sand-200 text-ink-600 rounded-xl text-sm font-heading font-semibold transition"
-                                    title="Список страниц">
-                                Страницы
-                            </button>
-
-                            <!-- Inspect resources modal -->
-                            <button @click="openResourcesModal(site)"
-                                    class="px-3.5 py-2.5 bg-sand-50 hover:bg-sand-100 border border-sand-200 text-ink-600 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5"
-                                    title="Внешние библиотеки и ресурсы">
-                                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                </svg>
-                                <span>Ресурсы</span>
-                            </button>
-
-                            <!-- Download ZIP -->
-                            <a :href="'/' + routePrefix + '/export/' + site.id"
-                               class="p-2.5 text-ink-400 hover:text-ink-900 hover:bg-sand-100 rounded-xl transition"
-                               title="Скачать ZIP архив">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                 </svg>
                             </a>
 
-                            <!-- Delete -->
-                            <button @click="confirmDelete(site)"
-                                    class="p-2.5 text-ink-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                                    title="Удалить">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            <!-- Options Dropdown -->
+                            <div x-data="{ openOptions: false }" class="relative">
+                                <button type="button"
+                                        @click="openOptions = !openOptions"
+                                        @click.away="openOptions = false"
+                                        class="px-3.5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0"
+                                        title="Опции сайта">
+                                    <span>Опции</span>
+                                    <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div x-show="openOptions"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     x-cloak
+                                     class="absolute right-0 bottom-full mb-2 w-52 bg-white border border-sand-200 rounded-2xl shadow-xl z-30 p-1.5 space-y-0.5">
+
+                                    <button type="button"
+                                            @click="openPagesModal(site); openOptions = false"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                        <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        <span>Страницы сайта</span>
+                                    </button>
+
+                                    <button type="button"
+                                            @click="openResourcesModal(site); openOptions = false"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                        <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                        </svg>
+                                        <span>Ресурсы и CDN</span>
+                                    </button>
+
+                                    <a :href="'/' + routePrefix + '/export/' + site.id"
+                                       @click="openOptions = false"
+                                       class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                        </svg>
+                                        <span>Скачать ZIP</span>
+                                    </a>
+
+                                    <div class="border-t border-sand-100 my-1"></div>
+
+                                    <button type="button"
+                                            @click="confirmDelete(site); openOptions = false"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition text-left font-medium">
+                                        <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        <span>Удалить сайт</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Sites List (Compact Table / Rows) -->
+            <div x-show="filteredSites.length > 0 && viewMode === 'list'" class="space-y-3">
+                <template x-for="site in filteredSites" :key="site.id">
+                    <div class="bg-white border border-sand-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-brand-200 hover:shadow-sm transition">
+                        <div class="min-w-0 flex-1 space-y-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="text-base font-bold font-heading text-ink-900 truncate" :title="site.id" x-text="site.id"></h3>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold border shrink-0"
+                                      :class="site.download_mode === 'full' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
+                                      x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Легкий'">
+                                </span>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    Готов
+                                </span>
+                            </div>
+                            <a :href="site.url" target="_blank" class="text-xs sm:text-sm text-ink-400 hover:text-brand truncate block" :title="site.url" x-text="site.url"></a>
+                        </div>
+
+                        <!-- List metrics -->
+                        <div class="flex items-center gap-4 sm:gap-6 text-sm shrink-0">
+                            <div>
+                                <span class="text-xs text-ink-400 block font-medium">Размер</span>
+                                <span class="font-mono font-bold text-brand whitespace-nowrap" x-text="site.human_size"></span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-ink-400 block font-medium">Файлов</span>
+                                <span class="font-mono font-bold text-ink-900 whitespace-nowrap" x-text="site.files_count"></span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-ink-400 block font-medium">Страниц</span>
+                                <span class="font-mono font-bold text-emerald-700 whitespace-nowrap" x-text="site.pages_count"></span>
+                            </div>
+                            <div class="hidden sm:block">
+                                <span class="text-xs text-ink-400 block font-medium">Скачан</span>
+                                <span class="font-mono text-xs text-ink-500 whitespace-nowrap" x-text="(site.completed_at || site.started_at || '').slice(0, 10)"></span>
+                            </div>
+                        </div>
+
+                        <!-- List actions -->
+                        <div class="flex items-center gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-sand-100">
+                            <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
+                               class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
+                                <span>Открыть</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                 </svg>
-                            </button>
+                            </a>
+
+                            <div x-data="{ openOptions: false }" class="relative">
+                                <button type="button"
+                                        @click="openOptions = !openOptions"
+                                        @click.away="openOptions = false"
+                                        class="px-3 py-2 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0">
+                                    <span>Опции</span>
+                                    <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+
+                                <div x-show="openOptions"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     x-cloak
+                                     class="absolute right-0 top-full mt-2 w-52 bg-white border border-sand-200 rounded-2xl shadow-xl z-30 p-1.5 space-y-0.5">
+
+                                    <button type="button"
+                                            @click="openPagesModal(site); openOptions = false"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                        <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        <span>Страницы сайта</span>
+                                    </button>
+
+                                    <button type="button"
+                                            @click="openResourcesModal(site); openOptions = false"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                        <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                        </svg>
+                                        <span>Ресурсы и CDN</span>
+                                    </button>
+
+                                    <a :href="'/' + routePrefix + '/export/' + site.id"
+                                       @click="openOptions = false"
+                                       class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                        </svg>
+                                        <span>Скачать ZIP</span>
+                                    </a>
+
+                                    <div class="border-t border-sand-100 my-1"></div>
+
+                                    <button type="button"
+                                            @click="confirmDelete(site); openOptions = false"
+                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition text-left font-medium">
+                                        <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        <span>Удалить сайт</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -641,6 +808,7 @@
                 isSubmitting: false,
                 searchQuery: '',
                 sortBy: 'latest',
+                viewMode: 'grid',
                 siteToDelete: null,
                 duplicateModal: null,
                 pagesModalSite: null,

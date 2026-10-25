@@ -57,7 +57,7 @@ final class SiteStorageTest extends TestCase
         $this->assertSame('demo-site', $retrieved->id);
         $this->assertSame(15, $retrieved->filesCount);
         $this->assertSame(1048576, $retrieved->totalBytes);
-        $this->assertSame('1.00 MB', $retrieved->humanReadableSize());
+        $this->assertSame('1 MB', $retrieved->humanReadableSize());
     }
 
     public function test_it_saves_and_deletes_files_and_sites(): void
