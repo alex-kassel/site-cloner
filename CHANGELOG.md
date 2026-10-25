@@ -5,6 +5,13 @@ All notable changes to `alex-kassel/site-cloner` will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-10-25
+
+### Added
+- Outbound HTTP/SOCKS5 proxy support via `config('site-cloner.proxy')` / `SITE_CLONER_PROXY` environment variable (e.g. `socks5h://warp:1080` or HTTP proxies).
+- Intelligent fallback in `SiteClonerEngine` and `DashboardController::check()`: automatically retries via proxy upon receiving HTTP 403/429 Cloudflare challenges on datacenter IPs, activating proxy for subsequent asset and page downloads.
+- Improved diagnostic error messages when target websites are protected by Cloudflare WAF challenges.
+
 ## [1.0.1] - 2026-10-25
 
 ### Added

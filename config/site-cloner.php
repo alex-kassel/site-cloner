@@ -51,10 +51,17 @@ return [
     |--------------------------------------------------------------------------
     | HTTP Client Settings
     |--------------------------------------------------------------------------
+    |
+    | Optional outbound proxy URL (e.g. "socks5h://warp:1080" or
+    | "http://user:pass@host:port") used to bypass datacenter IP blocks
+    | (such as Cloudflare 403 challenges on hosting providers).
+    |
     */
     'timeout' => 30,
 
     'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+
+    'proxy' => env('SITE_CLONER_PROXY', null),
 
     /*
     |--------------------------------------------------------------------------

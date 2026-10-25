@@ -157,6 +157,7 @@ Published in `config/site-cloner.php`:
 | `storage_path` | `?string` | `null` | Absolute storage path on disk (defaults to `storage_path('app/site-cloner/sites')`). |
 | `timeout` | `int` | `30` | HTTP request timeout in seconds for crawling pages and assets. |
 | `user_agent` | `string` | Chrome 129 UA | Custom User-Agent string sent with crawl requests. |
+| `proxy` | `?string` | `null` | Optional outbound HTTP/SOCKS5 proxy URL (e.g. `'socks5h://warp:1080'`) to bypass datacenter IP blocks (Cloudflare 403). |
 | `external_cdn_hosts` | `array` | Google & Bunny Fonts | Hosts excluded from local download and kept as live external links. |
 
 ### Web Route Reference

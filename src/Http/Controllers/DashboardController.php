@@ -10,6 +10,7 @@ use AlexKassel\SiteCloner\Services\SiteClonerEngine;
 use AlexKassel\SiteCloner\Services\SiteSlugGenerator;
 use AlexKassel\SiteCloner\Services\SiteStorage;
 use AlexKassel\SiteCloner\Services\UrlNormalizer;
+use GuzzleHttp\Client;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -75,18 +76,77 @@ final class DashboardController
     public function check(Request $request): JsonResponse
     {
         $url = trim((string) $request->input('url', ''));
-        if ($url === '') {
-            return response()->json(['error' => 'URL is required'], 422);
+        if ($url === '' || filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return response()->json(['error' => __('site-cloner::api.invalid_url')], 422);
         }
 
         $id = $this->slugGenerator->generate($url);
         $exists = $this->storage->exists($id);
         $manifest = $exists ? $this->storage->getManifest($id) : null;
 
+        if ($exists) {
+            return response()->json([
+                'id' => $id,
+                'exists' => true,
+                'manifest' => $manifest?->toArray(),
+            ]);
+        }
+
+        // Pre-flight reachability probe
+        $proxy = config('site-cloner.proxy');
+        $proxyUrl = is_string($proxy) && trim($proxy) !== '' ? trim($proxy) : null;
+        $timeout = (int) config('site-cloner.timeout', 15);
+        $userAgent = (string) config('site-cloner.user_agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
+
+        $client = new Client([
+            'timeout' => min($timeout, 15),
+            'verify' => false,
+            'http_errors' => false,
+            'headers' => [
+                'User-Agent' => $userAgent,
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ],
+        ]);
+
+        try {
+            $response = $client->get($url);
+            $statusCode = $response->getStatusCode();
+
+            // Retry via proxy if 403 or 429 and proxy is configured
+            if (in_array($statusCode, [403, 429], true) && $proxyUrl !== null) {
+                $response = $client->get($url, ['proxy' => $proxyUrl]);
+                $statusCode = $response->getStatusCode();
+            }
+
+            if ($statusCode === 403) {
+                $cfMitigated = $response->getHeaderLine('cf-mitigated');
+                $isCloudflare = strtolower($cfMitigated) === 'challenge' || str_contains(strtolower($response->getHeaderLine('server')), 'cloudflare');
+
+                $error = $isCloudflare
+                    ? 'Target website is protected by Cloudflare/WAF and blocked this server IP (HTTP 403). Set SITE_CLONER_PROXY (e.g. socks5h://... or http://...) to bypass datacenter IP restrictions.'
+                    : 'Target website returned HTTP 403 Forbidden. Configure SITE_CLONER_PROXY if your server IP is blocked.';
+
+                return response()->json(['error' => $error], 422);
+            }
+        } catch (\Throwable) {
+            if ($proxyUrl !== null) {
+                try {
+                    $response = $client->get($url, ['proxy' => $proxyUrl]);
+                    if ($response->getStatusCode() === 403) {
+                        return response()->json([
+                            'error' => 'Target website returned HTTP 403 Forbidden even via proxy.',
+                        ], 422);
+                    }
+                } catch (\Throwable) {
+                    // Ignore connection errors during pre-flight
+                }
+            }
+        }
+
         return response()->json([
             'id' => $id,
-            'exists' => $exists,
-            'manifest' => $manifest?->toArray(),
+            'exists' => false,
+            'manifest' => null,
         ]);
     }
 

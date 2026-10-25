@@ -37,13 +37,16 @@ class SiteClonerServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(SiteClonerEngine::class, function ($app): SiteClonerEngine {
+            $proxy = config('site-cloner.proxy');
+
             return new SiteClonerEngine(
                 storage: $app->make(SiteStorage::class),
                 urlNormalizer: $app->make(UrlNormalizer::class),
                 assetRewriter: $app->make(AssetRewriter::class),
                 maxPages: config('site-cloner.max_pages'),
                 timeout: (int) config('site-cloner.timeout', 30),
-                userAgent: (string) config('site-cloner.user_agent', 'SiteCloner/1.0')
+                userAgent: (string) config('site-cloner.user_agent', 'SiteCloner/1.0'),
+                proxy: is_string($proxy) && trim($proxy) !== '' ? trim($proxy) : null,
             );
         });
     }

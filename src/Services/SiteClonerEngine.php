@@ -7,10 +7,13 @@ namespace AlexKassel\SiteCloner\Services;
 use AlexKassel\SiteCloner\Data\SiteManifest;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 
 final class SiteClonerEngine
 {
     private Client $httpClient;
+
+    private ?string $activeProxy = null;
 
     public function __construct(
         private SiteStorage $storage,
@@ -20,7 +23,10 @@ final class SiteClonerEngine
         private int $timeout = 30,
         private string $userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
         ?Client $httpClient = null,
+        private ?string $proxy = null,
     ) {
+        $this->proxy = $this->proxy !== null && trim($this->proxy) !== '' ? trim($this->proxy) : null;
+
         $this->httpClient = $httpClient ?? new Client([
             'timeout' => $this->timeout,
             'verify' => false,
@@ -91,7 +97,7 @@ final class SiteClonerEngine
                     $manifest->elapsedSeconds = time() - $startTime;
 
                     try {
-                        $response = $this->httpClient->get($assetUrl);
+                        $response = $this->requestGet($assetUrl);
                         $statusCode = $response->getStatusCode();
 
                         if ($statusCode >= 200 && $statusCode < 400) {
@@ -149,7 +155,7 @@ final class SiteClonerEngine
                 $manifest->elapsedSeconds = time() - $startTime;
 
                 try {
-                    $response = $this->httpClient->get($pageUrl);
+                    $response = $this->requestGet($pageUrl);
                     $statusCode = $response->getStatusCode();
 
                     if ($statusCode >= 200 && $statusCode < 400) {
@@ -248,6 +254,51 @@ final class SiteClonerEngine
         // Keep last 100 log entries
         if (count($manifest->logs) > 100) {
             array_shift($manifest->logs);
+        }
+    }
+
+    /**
+     * Perform GET request with smart proxy fallback when datacenter IPs are blocked (e.g. Cloudflare 403 challenge).
+     *
+     * @param  array<string, mixed>  $options
+     *
+     * @throws GuzzleException
+     */
+    private function requestGet(string $url, array $options = []): ResponseInterface
+    {
+        if ($this->activeProxy !== null && ! isset($options['proxy'])) {
+            $options['proxy'] = $this->activeProxy;
+
+            return $this->httpClient->get($url, $options);
+        }
+
+        try {
+            $response = $this->httpClient->get($url, $options);
+            $statusCode = $response->getStatusCode();
+
+            if (in_array($statusCode, [403, 429], true) && $this->proxy !== null && ! isset($options['proxy'])) {
+                $retryOptions = array_merge($options, ['proxy' => $this->proxy]);
+                $proxyResponse = $this->httpClient->get($url, $retryOptions);
+                $proxyStatus = $proxyResponse->getStatusCode();
+
+                if ($proxyStatus >= 200 && $proxyStatus < 400) {
+                    $this->activeProxy = $this->proxy;
+                }
+
+                return $proxyResponse;
+            }
+
+            return $response;
+        } catch (GuzzleException $e) {
+            if ($this->proxy !== null && ! isset($options['proxy'])) {
+                $retryOptions = array_merge($options, ['proxy' => $this->proxy]);
+                $proxyResponse = $this->httpClient->get($url, $retryOptions);
+                $this->activeProxy = $this->proxy;
+
+                return $proxyResponse;
+            }
+
+            throw $e;
         }
     }
 }
