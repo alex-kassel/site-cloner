@@ -202,6 +202,13 @@ final class SiteClonerEngine
             $manifest->currentFile = null;
             $manifest->elapsedSeconds = time() - $startTime;
             $this->addLog($manifest, 'Скачивание сайта успешно завершено!', 'info');
+
+            try {
+                $inspector = new ResourceInspector($this->storage);
+                $manifest->externalResources = $inspector->inspect($manifest->id, forceRefresh: true);
+            } catch (\Throwable) {
+                // Ignore inspector failure to not fail the crawl
+            }
         } catch (\Throwable $e) {
             $manifest->status = 'failed';
             $manifest->errorMessage = $e->getMessage();

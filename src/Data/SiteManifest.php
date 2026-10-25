@@ -9,6 +9,7 @@ final class SiteManifest
     /**
      * @param  array<int, string>  $pages
      * @param  array<int, array{time: string, message: string, level: string}>  $logs
+     * @param  array<string, mixed>  $externalResources
      */
     public function __construct(
         public string $id,
@@ -26,6 +27,7 @@ final class SiteManifest
         public int $elapsedSeconds = 0,
         public array $pages = [],
         public array $logs = [],
+        public array $externalResources = [],
     ) {}
 
     /**
@@ -49,6 +51,7 @@ final class SiteManifest
             elapsedSeconds: (int) ($data['elapsedSeconds'] ?? ($data['elapsed_seconds'] ?? 0)),
             pages: is_array($data['pages'] ?? null) ? $data['pages'] : [],
             logs: is_array($data['logs'] ?? null) ? $data['logs'] : [],
+            externalResources: is_array($data['externalResources'] ?? null) ? $data['externalResources'] : (is_array($data['external_resources'] ?? null) ? $data['external_resources'] : []),
         );
     }
 
@@ -73,6 +76,7 @@ final class SiteManifest
             'elapsed_seconds' => $this->elapsedSeconds,
             'pages' => $this->pages,
             'logs' => $this->logs,
+            'external_resources' => $this->externalResources,
             'human_size' => $this->humanReadableSize(),
         ];
     }

@@ -322,6 +322,16 @@
                                 Страницы
                             </button>
 
+                            <!-- Inspect resources modal -->
+                            <button @click="openResourcesModal(site)"
+                                    class="px-3.5 py-2.5 bg-sand-50 hover:bg-sand-100 border border-sand-200 text-ink-600 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5"
+                                    title="Внешние библиотеки и ресурсы">
+                                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                </svg>
+                                <span>Ресурсы</span>
+                            </button>
+
                             <!-- Delete -->
                             <button @click="confirmDelete(site)"
                                     class="p-2.5 text-ink-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
@@ -372,6 +382,159 @@
 
             <div class="pt-3.5 border-t border-sand-200 flex justify-end">
                 <button @click="pagesModalSite = null" class="px-5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-900 rounded-xl text-sm font-heading font-semibold transition">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Resources Inspection Modal -->
+    <div x-show="resourcesModalSite !== null" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/40 backdrop-blur-sm">
+        <div @click.away="resourcesModalSite = null" class="bg-white border border-sand-200 rounded-3xl max-w-4xl w-full p-7 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-sand-200">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-1 text-xs font-semibold uppercase tracking-wider rounded-lg bg-sand-100 text-ink-600">Аудит зависимостей</span>
+                        <h3 class="text-xl font-bold font-heading text-ink-900 truncate" x-text="resourcesModalSite ? resourcesModalSite.id : ''"></h3>
+                    </div>
+                    <p class="text-sm text-ink-500 mt-1">Внешние библиотеки, CDN, шрифты, медиафайлы и заблокированные ссылки</p>
+                </div>
+                <button @click="resourcesModalSite = null" class="text-ink-400 hover:text-ink-900 text-xl leading-none p-2 rounded-xl hover:bg-sand-100 transition">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div x-show="isLoadingResources" class="py-16 text-center space-y-3">
+                <svg class="animate-spin h-8 w-8 text-brand mx-auto" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <p class="text-sm font-medium text-ink-600">Анализ внешних ресурсов и библиотек...</p>
+            </div>
+
+            <!-- Loaded Content -->
+            <div x-show="!isLoadingResources && resourcesData" class="flex-1 overflow-y-auto space-y-5 pr-1">
+                <!-- Summary Stats Counters -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-sand-50 border border-sand-200 rounded-2xl p-4">
+                        <span class="text-xs font-medium text-ink-400 uppercase tracking-wider block">Всего доменов</span>
+                        <span class="text-2xl font-bold font-heading text-ink-900 mt-1 block" x-text="resourcesData?.summary?.total_domains || 0"></span>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+                        <span class="text-xs font-semibold text-emerald-800 uppercase tracking-wider block">💾 Офлайн (скачано)</span>
+                        <span class="text-2xl font-bold font-heading text-emerald-700 mt-1 block" x-text="resourcesData?.summary?.downloaded_count || 0"></span>
+                    </div>
+                    <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+                        <span class="text-xs font-semibold text-sky-800 uppercase tracking-wider block">🔗 Внешние CDN</span>
+                        <span class="text-2xl font-bold font-heading text-sky-700 mt-1 block" x-text="resourcesData?.summary?.external_count || 0"></span>
+                    </div>
+                    <div class="bg-sand-100 border border-sand-200 rounded-2xl p-4">
+                        <span class="text-xs font-semibold text-ink-600 uppercase tracking-wider block">🚫 Заблокировано</span>
+                        <span class="text-2xl font-bold font-heading text-ink-700 mt-1 block" x-text="resourcesData?.summary?.deactivated_count || 0"></span>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs & Search -->
+                <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                    <div class="flex items-center gap-1.5 p-1 bg-sand-100 rounded-xl overflow-x-auto">
+                        <button @click="resourcesFilter = 'all'"
+                                :class="resourcesFilter === 'all' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
+                            Все
+                        </button>
+                        <button @click="resourcesFilter = 'downloaded'"
+                                :class="resourcesFilter === 'downloaded' ? 'bg-white text-emerald-800 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
+                            💾 Скачано офлайн
+                        </button>
+                        <button @click="resourcesFilter = 'external'"
+                                :class="resourcesFilter === 'external' ? 'bg-white text-sky-800 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
+                            🔗 Внешние CDN
+                        </button>
+                        <button @click="resourcesFilter = 'deactivated'"
+                                :class="resourcesFilter === 'deactivated' ? 'bg-white text-ink-800 shadow-sm font-semibold' : 'text-ink-600 hover:text-ink-900'"
+                                class="px-3 py-1.5 rounded-lg text-xs font-heading transition shrink-0">
+                            🚫 Ссылки
+                        </button>
+                    </div>
+
+                    <div class="relative flex-1 max-w-xs">
+                        <input type="text"
+                               x-model="resourcesSearch"
+                               placeholder="Поиск по домену..."
+                               class="w-full bg-sand-50 border border-sand-200 rounded-xl px-3.5 py-2 text-xs text-ink-900 placeholder-ink-400 focus:outline-none focus:border-brand">
+                    </div>
+                </div>
+
+                <!-- Domains Grouped List -->
+                <div class="space-y-3">
+                    <template x-for="item in filteredResourcesDomains" :key="item.domain">
+                        <div class="border border-sand-200 rounded-2xl p-4 bg-white hover:border-sand-300 transition space-y-3 shadow-xs">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <span class="w-2.5 h-2.5 rounded-full shrink-0"
+                                          :class="{
+                                              'bg-emerald-500': item.status === 'downloaded',
+                                              'bg-sky-500': item.status === 'external',
+                                              'bg-ink-400': item.status === 'deactivated'
+                                          }"></span>
+                                    <span class="font-mono text-base font-bold text-ink-900 truncate" x-text="item.domain"></span>
+                                    <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold tracking-wide shrink-0"
+                                          :class="{
+                                              'bg-emerald-100 text-emerald-800': item.status === 'downloaded',
+                                              'bg-sky-100 text-sky-800': item.status === 'external',
+                                              'bg-sand-100 text-ink-600': item.status === 'deactivated'
+                                          }"
+                                          x-text="item.status_label"></span>
+                                </div>
+
+                                <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                                    <template x-for="(count, typeName) in item.types" :key="typeName">
+                                        <span class="px-2 py-0.5 rounded bg-sand-100 border border-sand-200 text-ink-600 text-[11px] font-mono">
+                                            <span class="font-semibold text-ink-900" x-text="count"></span> <span x-text="typeName"></span>
+                                        </span>
+                                    </template>
+                                    <span class="text-xs font-semibold font-mono text-ink-400 bg-sand-50 px-2 py-0.5 rounded" x-text="'Всего: ' + item.count"></span>
+                                </div>
+                            </div>
+
+                            <!-- Expandable URL list toggle -->
+                            <div x-data="{ expanded: false }">
+                                <button @click="expanded = !expanded"
+                                        class="text-xs font-semibold text-brand hover:text-brand-hover flex items-center gap-1 transition">
+                                    <span x-text="expanded ? 'Скрыть URL-адреса ▲' : 'Показать примеры URL (' + item.urls.length + ') ▼'"></span>
+                                </button>
+
+                                <div x-show="expanded" x-cloak class="mt-2.5 bg-sand-50 border border-sand-200 rounded-xl p-3 space-y-1.5 max-h-48 overflow-y-auto">
+                                    <template x-for="url in item.urls" :key="url">
+                                        <div class="text-xs font-mono text-ink-700 truncate select-all hover:text-ink-900" :title="url" x-text="url"></div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="filteredResourcesDomains.length === 0">
+                        <div class="text-center py-10 text-ink-400 text-sm">
+                            Ресурсов по выбранным критериям не найдено.
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="pt-4 border-t border-sand-200 flex items-center justify-between">
+                <button @click="fetchResources(resourcesModalSite.id, true)"
+                        class="px-4 py-2 bg-sand-100 hover:bg-sand-200 text-ink-600 rounded-xl text-xs font-heading font-semibold transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Пересканировать ресурсы
+                </button>
+                <button @click="resourcesModalSite = null" class="px-5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-900 rounded-xl text-sm font-heading font-semibold transition">
                     Закрыть
                 </button>
             </div>
@@ -441,6 +604,11 @@
                 duplicateModal: null,
                 pagesModalSite: null,
                 pagesSearchQuery: '',
+                resourcesModalSite: null,
+                resourcesData: null,
+                isLoadingResources: false,
+                resourcesFilter: 'all',
+                resourcesSearch: '',
                 activeDownloads: [],
                 sites: @json(array_map(fn($s) => $s->toArray(), $sites)),
                 totalSizeFormatted: '{{ $totalSizeFormatted }}',
@@ -489,6 +657,45 @@
                 openPagesModal(site) {
                     this.pagesModalSite = site;
                     this.pagesSearchQuery = '';
+                },
+
+                get filteredResourcesDomains() {
+                    if (!this.resourcesData || !this.resourcesData.domains) return [];
+                    let domains = [...this.resourcesData.domains];
+                    if (this.resourcesFilter !== 'all') {
+                        domains = domains.filter(d => d.status === this.resourcesFilter);
+                    }
+                    if (this.resourcesSearch.trim()) {
+                        const q = this.resourcesSearch.toLowerCase();
+                        domains = domains.filter(d =>
+                            d.domain.toLowerCase().includes(q) ||
+                            (d.urls && d.urls.some(u => u.toLowerCase().includes(q)))
+                        );
+                    }
+                    return domains;
+                },
+
+                async openResourcesModal(site) {
+                    this.resourcesModalSite = site;
+                    this.resourcesFilter = 'all';
+                    this.resourcesSearch = '';
+                    await this.fetchResources(site.id, false);
+                },
+
+                async fetchResources(siteId, refresh = false) {
+                    this.isLoadingResources = true;
+                    try {
+                        const res = await fetch(`/${this.routePrefix}/resources/${siteId}${refresh ? '?refresh=1' : ''}`);
+                        if (res.ok) {
+                            this.resourcesData = await res.json();
+                        } else {
+                            alert('Не удалось загрузить аудит ресурсов');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.isLoadingResources = false;
+                    }
                 },
 
                 formatSeconds(secs) {

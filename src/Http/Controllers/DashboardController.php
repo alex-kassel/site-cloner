@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexKassel\SiteCloner\Http\Controllers;
 
 use AlexKassel\SiteCloner\Data\SiteManifest;
+use AlexKassel\SiteCloner\Services\ResourceInspector;
 use AlexKassel\SiteCloner\Services\SiteClonerEngine;
 use AlexKassel\SiteCloner\Services\SiteSlugGenerator;
 use AlexKassel\SiteCloner\Services\SiteStorage;
@@ -181,6 +182,23 @@ final class DashboardController
         }
 
         return response()->json($manifest->toArray());
+    }
+
+    public function resources(string $siteId, Request $request, ResourceInspector $inspector): JsonResponse
+    {
+        $manifest = $this->storage->getManifest($siteId);
+        if ($manifest === null) {
+            return response()->json(['error' => 'Сайт не найден'], 404);
+        }
+
+        $refresh = (bool) $request->input('refresh', false);
+        $data = $inspector->inspect($siteId, forceRefresh: $refresh);
+
+        return response()->json([
+            'id' => $siteId,
+            'summary' => $data['summary'],
+            'domains' => array_values($data['domains']),
+        ]);
     }
 
     public function destroy(string $siteId): JsonResponse
