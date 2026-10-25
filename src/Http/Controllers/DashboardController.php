@@ -111,10 +111,22 @@ final class DashboardController
     public function progress(string $siteId): StreamedResponse
     {
         return new StreamedResponse(function () use ($siteId): void {
-            // Disable output buffering
-            if (ob_get_level() > 0) {
+            set_time_limit(0);
+            ignore_user_abort(true);
+
+            // Release session lock so concurrent/polling requests are not blocked
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_write_close();
+            }
+
+            // Disable all levels of output buffering
+            while (ob_get_level() > 0) {
                 ob_end_clean();
             }
+
+            // Send unbuffer padding to defeat FastCGI buffer immediately
+            echo ': '.str_repeat(' ', 4096)."\n\n";
+            flush();
 
             $manifest = $this->storage->getManifest($siteId);
             if ($manifest === null) {
@@ -124,17 +136,24 @@ final class DashboardController
                 return;
             }
 
-            // If already completed or failed, emit current status once and finish
+            // Emit current initial status immediately so UI updates without waiting for first file
+            echo 'data: '.json_encode($manifest->toArray())."\n\n";
+            flush();
+
+            // If already completed or failed, finish
             if ($manifest->status === 'completed' || $manifest->status === 'failed') {
-                echo 'data: '.json_encode($manifest->toArray())."\n\n";
+                echo "event: done\ndata: {}\n\n";
                 flush();
 
                 return;
             }
 
-            // If pending or downloading, run/attach the cloner engine
+            // Run cloner engine with live progress updates
             $this->engine->clone($manifest, function (SiteManifest $currentManifest): void {
                 echo 'data: '.json_encode($currentManifest->toArray())."\n\n";
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
                 flush();
             });
 
@@ -142,6 +161,9 @@ final class DashboardController
             $finalManifest = $this->storage->getManifest($siteId) ?? $manifest;
             echo 'data: '.json_encode($finalManifest->toArray())."\n\n";
             echo "event: done\ndata: {}\n\n";
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
             flush();
         }, 200, [
             'Content-Type' => 'text/event-stream',
@@ -149,6 +171,16 @@ final class DashboardController
             'Connection' => 'keep-alive',
             'X-Accel-Buffering' => 'no',
         ]);
+    }
+
+    public function status(string $siteId): JsonResponse
+    {
+        $manifest = $this->storage->getManifest($siteId);
+        if ($manifest === null) {
+            return response()->json(['error' => 'Сайт не найден'], 404);
+        }
+
+        return response()->json($manifest->toArray());
     }
 
     public function destroy(string $siteId): JsonResponse

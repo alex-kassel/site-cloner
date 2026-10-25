@@ -589,7 +589,34 @@
                         this.activeDownloads.unshift(task);
                     }
 
+                    // Dual sync: EventSource for real-time stream + 1-second fallback poll
                     const evtSource = new EventSource(`/${this.routePrefix}/progress/${siteId}`);
+
+                    const pollTimer = setInterval(async () => {
+                        if (task.status === 'completed' || task.status === 'failed') {
+                            clearInterval(pollTimer);
+                            return;
+                        }
+                        try {
+                            const res = await fetch(`/${this.routePrefix}/status/${siteId}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                Object.assign(task, data);
+                                if (task.status === 'completed' || task.status === 'failed') {
+                                    clearInterval(pollTimer);
+                                    evtSource.close();
+                                    this.refreshSitesList(task);
+                                    if (task.status === 'completed') {
+                                        setTimeout(() => {
+                                            this.dismissTask(task.id);
+                                        }, 3500);
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            // silent
+                        }
+                    }, 1000);
 
                     evtSource.onmessage = (e) => {
                         try {
@@ -597,6 +624,7 @@
                             Object.assign(task, updated);
 
                             if (task.status === 'completed' || task.status === 'failed') {
+                                clearInterval(pollTimer);
                                 evtSource.close();
                                 this.refreshSitesList(task);
 
@@ -613,11 +641,12 @@
                     };
 
                     evtSource.addEventListener('done', () => {
+                        clearInterval(pollTimer);
                         evtSource.close();
                     });
 
                     evtSource.onerror = (err) => {
-                        console.warn('SSE connection error', err);
+                        console.warn('SSE stream notice, fallback polling active', err);
                     };
                 },
 

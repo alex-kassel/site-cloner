@@ -122,6 +122,9 @@ final class SiteClonerEngine
                             $manifest->pages = array_values(array_unique($discoveredPagesList));
 
                             $this->addLog($manifest, "Страница загружена [{$statusCode}]: {$localPagePath}", 'info');
+                        } elseif ($statusCode === 429) {
+                            $this->addLog($manifest, 'Лимит запросов (429) от сервера. Пауза 2с...', 'warning');
+                            sleep(2);
                         } else {
                             $this->addLog($manifest, "Ошибка HTTP {$statusCode} при загрузке страницы: {$pageUrl}", 'warning');
                         }
@@ -130,6 +133,7 @@ final class SiteClonerEngine
                     }
 
                     $this->updateProgress($manifest, $onProgress);
+                    usleep(40000);
 
                     continue;
                 }
@@ -179,6 +183,9 @@ final class SiteClonerEngine
                         $bytesWritten = $this->storage->saveFile($manifest->id, $localAssetPath, $body);
                         $manifest->filesCount++;
                         $manifest->totalBytes += $bytesWritten;
+                    } elseif ($statusCode === 429) {
+                        $this->addLog($manifest, 'Лимит запросов (429) при загрузке ассета. Пауза 2с...', 'warning');
+                        sleep(2);
                     } else {
                         $this->addLog($manifest, "Ошибка {$statusCode} при загрузке ассета: {$assetUrl}", 'warning');
                     }
@@ -187,6 +194,7 @@ final class SiteClonerEngine
                 }
 
                 $this->updateProgress($manifest, $onProgress);
+                usleep(20000);
             }
 
             $manifest->status = 'completed';

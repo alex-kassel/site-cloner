@@ -13,6 +13,7 @@ Route::prefix($prefix)->middleware($middleware)->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('site-cloner.index');
     Route::post('/check', [DashboardController::class, 'check'])->name('site-cloner.check');
     Route::post('/start', [DashboardController::class, 'start'])->name('site-cloner.start');
+    Route::get('/status/{siteId}', [DashboardController::class, 'status'])->name('site-cloner.status');
     Route::get('/progress/{siteId}', [DashboardController::class, 'progress'])->name('site-cloner.progress');
     Route::delete('/sites/{siteId}', [DashboardController::class, 'destroy'])->name('site-cloner.destroy');
     Route::get('/view/{siteId}/{path?}', [ViewerController::class, 'serve'])->where('path', '.*')->name('site-cloner.view');
