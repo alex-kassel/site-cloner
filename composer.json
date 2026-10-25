@@ -1,6 +1,15 @@
 {
     "name": "alex-kassel/site-cloner",
-    "description": "SiteCloner package for Laravel.",
+    "description": "Full website and demo-template offline cloner for Laravel with asset rewriting, resource inspection, and multi-language support.",
+    "keywords": [
+        "laravel",
+        "site-cloner",
+        "website-crawler",
+        "offline-browser",
+        "asset-rewriter",
+        "web-archiver",
+        "scraper"
+    ],
     "license": "MIT",
     "type": "library",
     "authors": [
