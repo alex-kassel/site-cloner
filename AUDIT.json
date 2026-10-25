@@ -1,0 +1,77 @@
+{
+    "schema_version": "1.0.0",
+    "auditor_version": "1.0.0",
+    "package": "alex-kassel/site-cloner",
+    "version": "1.0.0",
+    "audit": {
+        "commit": "692b5d8b6ef728fa2a11e0d2ab70d6089a3fa222",
+        "tree_hash": "7d373cc6c05f00f17151dcfbecf95a0297726da7",
+        "branch": "main",
+        "timestamp": "2026-10-25T19:05:33+00:00",
+        "environment": {
+            "php": "8.3.28",
+            "laravel": "13.37.0",
+            "os": "darwin"
+        }
+    },
+    "checks": {
+        "composer_validate": {
+            "check": "composer",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": "packages/alex-kassel/site-cloner/composer.json is valid",
+            "duration_seconds": 0.293
+        },
+        "pint": {
+            "check": "pint",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": "{\"tool\":\"pint\",\"result\":\"passed\"}",
+            "duration_seconds": 0.204
+        },
+        "phpstan": {
+            "check": "phpstan",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": "{\"tool\":\"phpstan\",\"result\":\"passed\",\"errors\":0}",
+            "duration_seconds": 1.518
+        },
+        "tests": {
+            "check": "tests",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": "{\"tool\":\"phpunit\",\"result\":\"passed\",\"tests\":17,\"passed\":17,\"assertions\":61,\"duration_ms\":10}",
+            "duration_seconds": 0.239
+        },
+        "isolated": {
+            "check": "isolated",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": "PHPUnit 11.5.57 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.28\nConfiguration: /private/var/folders/px/ykxw69555z9_pgw_yyv14fxh0000gn/T/wdt-isolated-c904a547f6ba40792447017e/project/phpunit.xml\n\n.................                                                 17 / 17 (100%)\n\nTime: 00:00.011, Memory: 10.00 MB\n\nOK (17 tests, 61 assertions)\n",
+            "duration_seconds": 18.04
+        },
+        "git_cleanliness": {
+            "check": "git_cleanliness",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": "Git repository is clean. No uncommitted changes.",
+            "duration_seconds": 0.022
+        },
+        "readme": {
+            "check": "readme",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": "README matches configured standard sections.",
+            "duration_seconds": 0.002
+        },
+        "export_ignore": {
+            "check": "export_ignore",
+            "package": "alex-kassel/site-cloner",
+            "status": "passed",
+            "output": ".gitattributes contains valid export-ignore directives.",
+            "duration_seconds": 0
+        }
+    },
+    "verdict": "PASSED",
+    "fingerprint": "sha256:567c59e9a91cf2a7ccdcc9a24b7d8d46b634a977e228792b1a173ba8e77e333a"
+}
