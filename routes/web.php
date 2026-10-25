@@ -8,8 +8,15 @@ use Illuminate\Support\Facades\Route;
 
 $prefix = config('site-cloner.route_prefix', 'site-cloner');
 $middleware = config('site-cloner.middleware', ['web']);
+$domain = config('site-cloner.domain');
 
-Route::prefix($prefix)->middleware($middleware)->group(function (): void {
+$routeGroup = Route::prefix($prefix)->middleware($middleware);
+
+if (! empty($domain)) {
+    $routeGroup->domain((string) $domain);
+}
+
+$routeGroup->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('site-cloner.index');
     Route::get('/locale/{locale}', [DashboardController::class, 'setLocale'])->name('site-cloner.locale');
     Route::post('/check', [DashboardController::class, 'check'])->name('site-cloner.check');

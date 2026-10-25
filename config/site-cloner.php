@@ -17,6 +17,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Route Domain
+    |--------------------------------------------------------------------------
+    |
+    | Optional domain or subdomain where cloner routes should be registered.
+    | When null, routes are available across all domains and hosts.
+    |
+    */
+    'domain' => env('SITE_CLONER_DOMAIN', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | Route Middleware
     |--------------------------------------------------------------------------
     |

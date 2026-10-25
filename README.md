@@ -152,6 +152,7 @@ Published in `config/site-cloner.php`:
 | Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `route_prefix` | `string` | `'site-cloner'` | Base URI prefix for the dashboard and viewer routes. |
+| `domain` | `?string` | `null` | Optional domain or subdomain to restrict routes to (e.g. `'tools.example.com'`). |
 | `middleware` | `array` | `['web']` | Middleware stack applied to all SiteCloner routes (add `auth` for admin-only access). |
 | `storage_path` | `?string` | `null` | Absolute storage path on disk (defaults to `storage_path('app/site-cloner/sites')`). |
 | `timeout` | `int` | `30` | HTTP request timeout in seconds for crawling pages and assets. |
