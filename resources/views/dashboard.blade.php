@@ -148,20 +148,22 @@
 
                     <!-- Mode Selector -->
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-sand-200">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2.5 shrink-0">
                             <span class="text-xs font-semibold text-ink-500 uppercase tracking-wider">Режим:</span>
-                            <div class="inline-flex p-1 bg-sand-100 rounded-xl">
+                            <div class="inline-flex items-center p-1 bg-sand-100 rounded-xl shrink-0">
                                 <button type="button"
                                         @click="downloadMode = 'light'"
                                         :class="downloadMode === 'light' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
-                                        class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
-                                    <span>⚡ Лёгкий</span>
+                                        class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <span class="shrink-0 text-sm">⚡</span>
+                                    <span class="whitespace-nowrap">Лёгкий</span>
                                 </button>
                                 <button type="button"
                                         @click="downloadMode = 'full'"
                                         :class="downloadMode === 'full' ? 'bg-white text-ink-900 shadow-sm font-semibold' : 'text-ink-500 hover:text-ink-800'"
-                                        class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition flex items-center gap-1.5">
-                                    <span>✈️ Полный</span>
+                                        class="px-3.5 py-1.5 rounded-lg text-xs font-heading transition inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <span class="shrink-0 text-sm">✈️</span>
+                                    <span class="whitespace-nowrap">Полный</span>
                                 </button>
                             </div>
                         </div>
@@ -187,74 +189,6 @@
                         </span>
                     </div>
                 </form>
-            </div>
-        </section>
-
-        <!-- Active Downloads Strip (Self-dismissing on completion) -->
-        <section x-show="activeDownloads.length > 0"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 -translate-y-2"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 -translate-y-2"
-                 x-cloak
-                 class="space-y-3.5">
-
-            <div class="flex items-center justify-between text-sm text-ink-600">
-                <div class="flex items-center gap-2.5">
-                    <span class="inline-block w-3 h-3 rounded-full bg-brand animate-pulse"></span>
-                    <span class="font-bold font-heading text-ink-900 text-base">Идет загрузка (<span x-text="activeDownloads.length"></span>)</span>
-                </div>
-                <button @click="dismissAllCompleted()" x-show="hasCompletedTasks()" class="text-sm text-ink-400 hover:text-ink-900 transition font-medium">
-                    Очистить завершенные
-                </button>
-            </div>
-
-            <div class="space-y-3">
-                <template x-for="task in activeDownloads" :key="task.id">
-                    <div class="bg-white border rounded-xl p-5 shadow-sm transition-colors"
-                         :class="task.status === 'completed' ? 'border-emerald-300 bg-emerald-50/30' : (task.status === 'failed' ? 'border-rose-300 bg-rose-50/30' : 'border-brand-200')">
-
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2.5 mb-1.5 flex-wrap">
-                                    <span class="font-mono text-sm font-semibold text-ink-900 bg-sand-100 px-3 py-1 rounded-md border border-sand-200 truncate" x-text="task.id"></span>
-                                    <span class="text-xs sm:text-sm px-3 py-0.5 rounded-full font-heading font-semibold tracking-wide"
-                                          :class="task.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : (task.status === 'failed' ? 'bg-rose-100 text-rose-700' : 'bg-brand-100 text-brand')">
-                                        <span x-text="task.status === 'completed' ? '✓ Завершено' : (task.status === 'failed' ? 'Ошибка' : 'Скачивание...')"></span>
-                                    </span>
-                                </div>
-                                <span class="text-sm text-ink-400 truncate block" x-text="task.url"></span>
-                            </div>
-
-                            <div class="flex items-center gap-5 text-sm font-mono shrink-0">
-                                <span class="text-ink-900 font-bold text-base" x-text="formatSeconds(task.elapsed_seconds)"></span>
-                                <span class="text-ink-600" x-text="(task.files_count || 0) + ' файлов'"></span>
-                                <span class="text-brand font-bold text-base" x-text="task.human_size || '0 B'"></span>
-
-                                <button @click="dismissTask(task.id)" class="text-ink-400 hover:text-ink-900 transition text-base leading-none p-1.5" title="Скрыть">
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Current file ticker -->
-                        <div class="flex items-center gap-2.5 text-sm bg-sand-50 px-3.5 py-2.5 rounded-lg border border-sand-200">
-                            <span class="text-ink-400 shrink-0 font-medium">Файл:</span>
-                            <span class="font-mono text-ink-900 truncate" x-text="task.current_file || 'Инициализация...' "></span>
-                        </div>
-
-                        <!-- Completed State Actions -->
-                        <div x-show="task.status === 'completed'" class="mt-3.5 pt-3.5 border-t border-sand-200 flex items-center justify-between text-sm">
-                            <span class="text-emerald-700 font-semibold">✓ Сайт успешно скачан и добавлен в архив</span>
-                            <a :href="'/' + routePrefix + '/view/' + task.id" target="_blank"
-                               class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-heading font-semibold transition">
-                                <span>Открыть сайт</span>
-                            </a>
-                        </div>
-                    </div>
-                </template>
             </div>
         </section>
 
@@ -319,7 +253,8 @@
             <!-- Sites Grid (Generous, readable Horizon-styled cards) -->
             <div x-show="filteredSites.length > 0 && viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <template x-for="site in filteredSites" :key="site.id">
-                    <div class="bg-white border border-sand-200 rounded-2xl p-6 flex flex-col justify-between hover:border-brand-200 hover:shadow-md transition duration-200 space-y-4 shadow-sm group">
+                    <div class="bg-white border rounded-2xl p-6 flex flex-col justify-between transition duration-200 space-y-4 shadow-sm group"
+                         :class="site.status === 'downloading' ? 'border-brand ring-2 ring-brand/10' : (site.status === 'failed' ? 'border-rose-300' : 'border-sand-200 hover:border-brand-200 hover:shadow-md')">
 
                         <div class="space-y-3.5">
                             <div class="flex items-start justify-between gap-2.5">
@@ -330,11 +265,26 @@
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <span class="text-xs px-2.5 py-1 rounded-full font-semibold border"
                                           :class="site.download_mode === 'full' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-                                          x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Легкий'">
+                                          x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Лёгкий'">
                                     </span>
-                                    <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        Готов
-                                    </span>
+
+                                    <!-- Status Badge -->
+                                    <template x-if="site.status === 'downloading'">
+                                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-brand animate-ping"></span>
+                                            <span>Загрузка...</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="site.status === 'completed'">
+                                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            Готов
+                                        </span>
+                                    </template>
+                                    <template x-if="site.status === 'failed'">
+                                        <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                            Ошибка
+                                        </span>
+                                    </template>
                                 </div>
                             </div>
 
@@ -342,99 +292,129 @@
                             <div class="grid grid-cols-3 gap-2 bg-sand-50 p-3 rounded-xl border border-sand-200 text-center">
                                 <div class="min-w-0">
                                     <span class="text-xs text-ink-400 block font-medium">Размер</span>
-                                    <span class="text-xs sm:text-sm font-bold font-mono text-brand whitespace-nowrap truncate block" x-text="site.human_size"></span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-brand whitespace-nowrap truncate block" x-text="site.human_size || '0 B'"></span>
                                 </div>
                                 <div class="min-w-0">
                                     <span class="text-xs text-ink-400 block font-medium">Файлов</span>
-                                    <span class="text-xs sm:text-sm font-bold font-mono text-ink-900 whitespace-nowrap truncate block" x-text="site.files_count"></span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-ink-900 whitespace-nowrap truncate block" x-text="site.files_count || 0"></span>
                                 </div>
                                 <div class="min-w-0">
                                     <span class="text-xs text-ink-400 block font-medium">Страниц</span>
-                                    <span class="text-xs sm:text-sm font-bold font-mono text-emerald-700 whitespace-nowrap truncate block" x-text="site.pages_count"></span>
+                                    <span class="text-xs sm:text-sm font-bold font-mono text-emerald-700 whitespace-nowrap truncate block" x-text="site.pages_count || 0"></span>
                                 </div>
                             </div>
 
-                            <div class="text-xs sm:text-sm text-ink-400 flex items-center justify-between">
-                                <span>Скачан:</span>
-                                <span class="font-mono text-ink-600" x-text="site.completed_at || site.started_at || 'неизвестно'"></span>
-                            </div>
+                            <!-- Live file ticker while downloading, or completed date -->
+                            <template x-if="site.status === 'downloading'">
+                                <div class="flex items-center justify-between text-xs bg-sand-100/70 px-3 py-2 rounded-xl border border-sand-200">
+                                    <span class="text-ink-600 font-mono truncate mr-2" x-text="site.current_file || 'Инициализация...' "></span>
+                                    <span class="font-mono text-ink-900 font-bold shrink-0" x-text="formatSeconds(site.elapsed_seconds)"></span>
+                                </div>
+                            </template>
+                            <template x-if="site.status !== 'downloading'">
+                                <div class="text-xs sm:text-sm text-ink-400 flex items-center justify-between">
+                                    <span>Скачан:</span>
+                                    <span class="font-mono text-ink-600" x-text="site.completed_at || site.started_at || 'неизвестно'"></span>
+                                </div>
+                            </template>
                         </div>
 
-                        <!-- Card Action Buttons: Clean 2-button layout with Dropdown -->
-                        <div class="flex items-center gap-2.5 pt-3.5 border-t border-sand-200">
-                            <!-- Open in viewer -->
-                            <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
-                               class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
-                                <span>Открыть сайт</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                </svg>
-                            </a>
-
-                            <!-- Options Dropdown -->
-                            <div x-data="{ openOptions: false }" class="relative">
-                                <button type="button"
-                                        @click="openOptions = !openOptions"
-                                        @click.away="openOptions = false"
-                                        class="px-3.5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0"
-                                        title="Опции сайта">
-                                    <span>Опции</span>
-                                    <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        <!-- Card Action Buttons: Downloading State vs Completed State -->
+                        <template x-if="site.status === 'downloading'">
+                            <div class="pt-3.5 border-t border-sand-200">
+                                <button type="button" disabled class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-sand-100 text-ink-600 rounded-xl text-sm font-heading font-medium cursor-wait">
+                                    <svg class="animate-spin w-4 h-4 text-brand" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
+                                    <span>Скачивание (<span x-text="formatSeconds(site.elapsed_seconds)"></span>)...</span>
                                 </button>
+                            </div>
+                        </template>
 
-                                <!-- Dropdown Menu -->
-                                <div x-show="openOptions"
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     x-cloak
-                                     class="absolute right-0 bottom-full mb-2 w-52 bg-white border border-sand-200 rounded-2xl shadow-xl z-30 p-1.5 space-y-0.5">
+                        <template x-if="site.status === 'completed'">
+                            <div class="flex items-center gap-2.5 pt-3.5 border-t border-sand-200">
+                                <!-- Open in viewer -->
+                                <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
+                                   class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
+                                    <span>Открыть сайт</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
 
+                                <!-- Options Dropdown -->
+                                <div x-data="{ openOptions: false }" class="relative">
                                     <button type="button"
-                                            @click="openPagesModal(site); openOptions = false"
-                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
-                                        <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            @click="openOptions = !openOptions"
+                                            @click.away="openOptions = false"
+                                            class="px-3.5 py-2.5 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0"
+                                            title="Опции сайта">
+                                        <span>Опции</span>
+                                        <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                         </svg>
-                                        <span>Страницы сайта</span>
                                     </button>
 
-                                    <button type="button"
-                                            @click="openResourcesModal(site); openOptions = false"
-                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
-                                        <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                        </svg>
-                                        <span>Ресурсы и CDN</span>
-                                    </button>
+                                    <!-- Dropdown Menu -->
+                                    <div x-show="openOptions"
+                                         x-transition:enter="transition ease-out duration-100"
+                                         x-transition:enter-start="opacity-0 scale-95"
+                                         x-transition:enter-end="opacity-100 scale-100"
+                                         x-transition:leave="transition ease-in duration-75"
+                                         x-transition:leave-start="opacity-100 scale-100"
+                                         x-transition:leave-end="opacity-0 scale-95"
+                                         x-cloak
+                                         class="absolute right-0 bottom-full mb-2 w-52 bg-white border border-sand-200 rounded-2xl shadow-xl z-30 p-1.5 space-y-0.5">
 
-                                    <a :href="'/' + routePrefix + '/export/' + site.id"
-                                       @click="openOptions = false"
-                                       class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
-                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                        </svg>
-                                        <span>Скачать ZIP</span>
-                                    </a>
+                                        <button type="button"
+                                                @click="openPagesModal(site); openOptions = false"
+                                                class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                            <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                            <span>Страницы сайта</span>
+                                        </button>
 
-                                    <div class="border-t border-sand-100 my-1"></div>
+                                        <button type="button"
+                                                @click="openResourcesModal(site); openOptions = false"
+                                                class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                            </svg>
+                                            <span>Ресурсы и CDN</span>
+                                        </button>
 
-                                    <button type="button"
-                                            @click="confirmDelete(site); openOptions = false"
-                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition text-left font-medium">
-                                        <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                        <span>Удалить сайт</span>
-                                    </button>
+                                        <a :href="'/' + routePrefix + '/export/' + site.id"
+                                           @click="openOptions = false"
+                                           class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                            </svg>
+                                            <span>Скачать ZIP</span>
+                                        </a>
+
+                                        <div class="border-t border-sand-100 my-1"></div>
+
+                                        <button type="button"
+                                                @click="confirmDelete(site); openOptions = false"
+                                                class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition text-left font-medium">
+                                            <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                            <span>Удалить сайт</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </template>
+
+                        <template x-if="site.status === 'failed'">
+                            <div class="pt-3.5 border-t border-sand-200 flex items-center justify-between">
+                                <span class="text-xs text-rose-600 font-medium truncate" x-text="site.error_message || 'Ошибка загрузки'"></span>
+                                <button type="button" @click="confirmDelete(site)" class="text-xs text-rose-600 hover:underline">Удалить</button>
+                            </div>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -442,17 +422,32 @@
             <!-- Sites List (Compact Table / Rows) -->
             <div x-show="filteredSites.length > 0 && viewMode === 'list'" class="space-y-3">
                 <template x-for="site in filteredSites" :key="site.id">
-                    <div class="bg-white border border-sand-200 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-brand-200 hover:shadow-sm transition">
+                    <div class="bg-white border rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition"
+                         :class="site.status === 'downloading' ? 'border-brand ring-2 ring-brand/10' : (site.status === 'failed' ? 'border-rose-300' : 'border-sand-200 hover:border-brand-200 hover:shadow-sm')">
                         <div class="min-w-0 flex-1 space-y-1">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <h3 class="text-base font-bold font-heading text-ink-900 truncate" :title="site.id" x-text="site.id"></h3>
                                 <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold border shrink-0"
                                       :class="site.download_mode === 'full' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-                                      x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Легкий'">
+                                      x-text="site.download_mode === 'full' ? '✈️ Полный' : '⚡ Лёгкий'">
                                 </span>
-                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                    Готов
-                                </span>
+
+                                <template x-if="site.status === 'downloading'">
+                                    <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-brand animate-ping"></span>
+                                        <span>Загрузка...</span>
+                                    </span>
+                                </template>
+                                <template x-if="site.status === 'completed'">
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                        Готов
+                                    </span>
+                                </template>
+                                <template x-if="site.status === 'failed'">
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                                        Ошибка
+                                    </span>
+                                </template>
                             </div>
                             <a :href="site.url" target="_blank" class="text-xs sm:text-sm text-ink-400 hover:text-brand truncate block" :title="site.url" x-text="site.url"></a>
                         </div>
@@ -461,92 +456,106 @@
                         <div class="flex items-center gap-4 sm:gap-6 text-sm shrink-0">
                             <div>
                                 <span class="text-xs text-ink-400 block font-medium">Размер</span>
-                                <span class="font-mono font-bold text-brand whitespace-nowrap" x-text="site.human_size"></span>
+                                <span class="font-mono font-bold text-brand whitespace-nowrap" x-text="site.human_size || '0 B'"></span>
                             </div>
                             <div>
                                 <span class="text-xs text-ink-400 block font-medium">Файлов</span>
-                                <span class="font-mono font-bold text-ink-900 whitespace-nowrap" x-text="site.files_count"></span>
+                                <span class="font-mono font-bold text-ink-900 whitespace-nowrap" x-text="site.files_count || 0"></span>
                             </div>
                             <div>
                                 <span class="text-xs text-ink-400 block font-medium">Страниц</span>
-                                <span class="font-mono font-bold text-emerald-700 whitespace-nowrap" x-text="site.pages_count"></span>
+                                <span class="font-mono font-bold text-emerald-700 whitespace-nowrap" x-text="site.pages_count || 0"></span>
                             </div>
                             <div class="hidden sm:block">
-                                <span class="text-xs text-ink-400 block font-medium">Скачан</span>
-                                <span class="font-mono text-xs text-ink-500 whitespace-nowrap" x-text="(site.completed_at || site.started_at || '').slice(0, 10)"></span>
+                                <span class="text-xs text-ink-400 block font-medium" x-text="site.status === 'downloading' ? 'Таймер' : 'Скачан'"></span>
+                                <span class="font-mono text-xs text-ink-600 whitespace-nowrap" x-text="site.status === 'downloading' ? formatSeconds(site.elapsed_seconds) : (site.completed_at || site.started_at || '').slice(0, 10)"></span>
                             </div>
                         </div>
 
                         <!-- List actions -->
                         <div class="flex items-center gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-sand-100">
-                            <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
-                               class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
-                                <span>Открыть</span>
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                </svg>
-                            </a>
-
-                            <div x-data="{ openOptions: false }" class="relative">
-                                <button type="button"
-                                        @click="openOptions = !openOptions"
-                                        @click.away="openOptions = false"
-                                        class="px-3 py-2 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0">
-                                    <span>Опции</span>
-                                    <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            <template x-if="site.status === 'downloading'">
+                                <button type="button" disabled class="inline-flex items-center gap-1.5 px-4 py-2 bg-sand-100 text-ink-600 rounded-xl text-sm font-heading font-medium cursor-wait">
+                                    <svg class="animate-spin w-3.5 h-3.5 text-brand" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
+                                    <span>Загрузка...</span>
                                 </button>
+                            </template>
 
-                                <div x-show="openOptions"
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="opacity-0 scale-95"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="opacity-100 scale-100"
-                                     x-transition:leave-end="opacity-0 scale-95"
-                                     x-cloak
-                                     class="absolute right-0 top-full mt-2 w-52 bg-white border border-sand-200 rounded-2xl shadow-xl z-30 p-1.5 space-y-0.5">
-
-                                    <button type="button"
-                                            @click="openPagesModal(site); openOptions = false"
-                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
-                                        <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            <template x-if="site.status === 'completed'">
+                                <div class="flex items-center gap-2">
+                                    <a :href="'/' + routePrefix + '/view/' + site.id" target="_blank"
+                                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-heading font-semibold transition shadow-sm shadow-brand/20 whitespace-nowrap">
+                                        <span>Открыть</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                         </svg>
-                                        <span>Страницы сайта</span>
-                                    </button>
-
-                                    <button type="button"
-                                            @click="openResourcesModal(site); openOptions = false"
-                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
-                                        <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                        </svg>
-                                        <span>Ресурсы и CDN</span>
-                                    </button>
-
-                                    <a :href="'/' + routePrefix + '/export/' + site.id"
-                                       @click="openOptions = false"
-                                       class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
-                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                        </svg>
-                                        <span>Скачать ZIP</span>
                                     </a>
 
-                                    <div class="border-t border-sand-100 my-1"></div>
+                                    <div x-data="{ openOptions: false }" class="relative">
+                                        <button type="button"
+                                                @click="openOptions = !openOptions"
+                                                @click.away="openOptions = false"
+                                                class="px-3 py-2 bg-sand-100 hover:bg-sand-200 text-ink-700 rounded-xl text-sm font-heading font-semibold transition flex items-center gap-1.5 shrink-0">
+                                            <span>Опции</span>
+                                            <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openOptions ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                            </svg>
+                                        </button>
 
-                                    <button type="button"
-                                            @click="confirmDelete(site); openOptions = false"
-                                            class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition text-left font-medium">
-                                        <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                        <span>Удалить сайт</span>
-                                    </button>
+                                        <div x-show="openOptions"
+                                             x-transition:enter="transition ease-out duration-100"
+                                             x-transition:enter-start="opacity-0 scale-95"
+                                             x-transition:enter-end="opacity-100 scale-100"
+                                             x-transition:leave="transition ease-in duration-75"
+                                             x-transition:leave-start="opacity-100 scale-100"
+                                             x-transition:leave-end="opacity-0 scale-95"
+                                             x-cloak
+                                             class="absolute right-0 top-full mt-2 w-52 bg-white border border-sand-200 rounded-2xl shadow-xl z-30 p-1.5 space-y-0.5">
+
+                                            <button type="button"
+                                                    @click="openPagesModal(site); openOptions = false"
+                                                    class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                                <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                                <span>Страницы сайта</span>
+                                            </button>
+
+                                            <button type="button"
+                                                    @click="openResourcesModal(site); openOptions = false"
+                                                    class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                                </svg>
+                                                <span>Ресурсы и CDN</span>
+                                            </button>
+
+                                            <a :href="'/' + routePrefix + '/export/' + site.id"
+                                               @click="openOptions = false"
+                                               class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:text-ink-900 hover:bg-sand-50 rounded-xl transition text-left">
+                                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                </svg>
+                                                <span>Скачать ZIP</span>
+                                            </a>
+
+                                            <div class="border-t border-sand-100 my-1"></div>
+
+                                            <button type="button"
+                                                    @click="confirmDelete(site); openOptions = false"
+                                                    class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition text-left font-medium">
+                                                <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                                <span>Удалить сайт</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
                         </div>
                     </div>
                 </template>
@@ -818,14 +827,13 @@
                 isLoadingResources: false,
                 resourcesFilter: 'all',
                 resourcesSearch: '',
-                activeDownloads: [],
                 sites: @json(array_map(fn($s) => $s->toArray(), $sites)),
                 totalSizeFormatted: '{{ $totalSizeFormatted }}',
 
                 init() {
                     this.sites.forEach(site => {
                         if (site.status === 'downloading' || site.status === 'pending') {
-                            this.connectSSE(site.id, site.url);
+                            this.connectDownload(site.id);
                         }
                     });
                 },
@@ -914,18 +922,6 @@
                     return `${m}:${s}`;
                 },
 
-                hasCompletedTasks() {
-                    return this.activeDownloads.some(t => t.status === 'completed');
-                },
-
-                dismissAllCompleted() {
-                    this.activeDownloads = this.activeDownloads.filter(t => t.status !== 'completed');
-                },
-
-                dismissTask(taskId) {
-                    this.activeDownloads = this.activeDownloads.filter(t => t.id !== taskId);
-                },
-
                 async submitUrl() {
                     if (!this.inputUrl.trim()) return;
                     this.isSubmitting = true;
@@ -982,98 +978,122 @@
                             return;
                         }
 
-                        this.connectSSE(data.id, url);
+                        const siteId = data.id;
+                        const initialManifest = data.manifest || {};
+
+                        // Immediately insert or update this site directly into this.sites (appears as the first card in the archive)
+                        const initialSite = {
+                            id: siteId,
+                            url: url,
+                            files_count: initialManifest.files_count || 0,
+                            pages_count: initialManifest.pages_count || 0,
+                            total_bytes: initialManifest.total_bytes || 0,
+                            human_size: initialManifest.human_size || '0 B',
+                            current_file: 'Подключение к серверу...',
+                            elapsed_seconds: 0,
+                            started_at: initialManifest.started_at || new Date().toISOString(),
+                            download_mode: this.downloadMode,
+                            ...initialManifest,
+                            status: 'downloading'
+                        };
+
+                        const existingIdx = this.sites.findIndex(s => s.id === siteId);
+                        if (existingIdx >= 0) {
+                            this.sites[existingIdx] = initialSite;
+                        } else {
+                            this.sites.unshift(initialSite);
+                        }
+                        this.recalculateTotalSize();
+
+                        this.connectDownload(siteId);
                     } catch (err) {
                         alert('Ошибка запроса: ' + err.message);
                     }
                 },
 
-                connectSSE(siteId, originalUrl) {
-                    let task = this.activeDownloads.find(t => t.id === siteId);
-                    if (!task) {
-                        task = {
-                            id: siteId,
-                            url: originalUrl,
-                            status: 'downloading',
-                            files_count: 0,
-                            total_bytes: 0,
-                            pages_count: 0,
-                            human_size: '0 B',
-                            current_file: 'Подключение...',
-                            elapsed_seconds: 0
-                        };
-                        this.activeDownloads.unshift(task);
-                    }
-
-                    // Dual sync: EventSource for real-time stream + 1-second fallback poll
-                    const evtSource = new EventSource(`/${this.routePrefix}/progress/${siteId}`);
-
-                    const pollTimer = setInterval(async () => {
-                        if (task.status === 'completed' || task.status === 'failed') {
-                            clearInterval(pollTimer);
+                connectDownload(siteId) {
+                    // Local ticker for smooth elapsed seconds updates
+                    const timerInterval = setInterval(() => {
+                        const idx = this.sites.findIndex(s => s.id === siteId);
+                        if (idx === -1) {
+                            clearInterval(timerInterval);
                             return;
                         }
+                        if (this.sites[idx].status !== 'downloading' && this.sites[idx].status !== 'pending') {
+                            clearInterval(timerInterval);
+                            return;
+                        }
+                        this.sites[idx].elapsed_seconds = (this.sites[idx].elapsed_seconds || 0) + 1;
+                    }, 1000);
+
+                    const updateSiteData = (freshData) => {
+                        const idx = this.sites.findIndex(s => s.id === siteId);
+                        if (idx >= 0) {
+                            // Merge fresh data reactively into this.sites
+                            this.sites[idx] = { ...this.sites[idx], ...freshData };
+                            this.recalculateTotalSize();
+                            return this.sites[idx];
+                        }
+                        return null;
+                    };
+
+                    // Fallback polling (every 800ms) ensuring continuous updates even if SSE is buffered
+                    const pollInterval = setInterval(async () => {
+                        const currentSite = this.sites.find(s => s.id === siteId);
+                        if (!currentSite || currentSite.status === 'completed' || currentSite.status === 'failed') {
+                            clearInterval(pollInterval);
+                            clearInterval(timerInterval);
+                            return;
+                        }
+
                         try {
                             const res = await fetch(`/${this.routePrefix}/status/${siteId}`);
                             if (res.ok) {
                                 const data = await res.json();
-                                Object.assign(task, data);
-                                if (task.status === 'completed' || task.status === 'failed') {
-                                    clearInterval(pollTimer);
-                                    evtSource.close();
-                                    this.refreshSitesList(task);
-                                    if (task.status === 'completed') {
-                                        setTimeout(() => {
-                                            this.dismissTask(task.id);
-                                        }, 3500);
-                                    }
+                                const updated = updateSiteData(data);
+                                if (updated && (updated.status === 'completed' || updated.status === 'failed')) {
+                                    clearInterval(pollInterval);
+                                    clearInterval(timerInterval);
+                                    if (evtSource) evtSource.close();
                                 }
                             }
                         } catch (e) {
                             // silent
                         }
-                    }, 1000);
+                    }, 800);
 
-                    evtSource.onmessage = (e) => {
-                        try {
-                            const updated = JSON.parse(e.data);
-                            Object.assign(task, updated);
+                    // Real-time EventSource connection
+                    let evtSource = null;
+                    try {
+                        evtSource = new EventSource(`/${this.routePrefix}/progress/${siteId}`);
 
-                            if (task.status === 'completed' || task.status === 'failed') {
-                                clearInterval(pollTimer);
-                                evtSource.close();
-                                this.refreshSitesList(task);
+                        evtSource.onmessage = (e) => {
+                            try {
+                                const freshData = JSON.parse(e.data);
+                                const updated = updateSiteData(freshData);
 
-                                // Auto-dismiss completed download task after 3.5 seconds
-                                if (task.status === 'completed') {
-                                    setTimeout(() => {
-                                        this.dismissTask(task.id);
-                                    }, 3500);
+                                if (updated && (updated.status === 'completed' || updated.status === 'failed')) {
+                                    clearInterval(pollInterval);
+                                    clearInterval(timerInterval);
+                                    evtSource.close();
                                 }
+                            } catch (err) {
+                                console.error('SSE JSON error', err);
                             }
-                        } catch (err) {
-                            console.error('SSE JSON error', err);
-                        }
-                    };
+                        };
 
-                    evtSource.addEventListener('done', () => {
-                        clearInterval(pollTimer);
-                        evtSource.close();
-                    });
+                        evtSource.addEventListener('done', () => {
+                            clearInterval(pollInterval);
+                            clearInterval(timerInterval);
+                            evtSource.close();
+                        });
 
-                    evtSource.onerror = (err) => {
-                        console.warn('SSE stream notice, fallback polling active', err);
-                    };
-                },
-
-                refreshSitesList(completedSite) {
-                    const idx = this.sites.findIndex(s => s.id === completedSite.id);
-                    if (idx >= 0) {
-                        this.sites[idx] = completedSite;
-                    } else {
-                        this.sites.unshift(completedSite);
+                        evtSource.onerror = (err) => {
+                            console.warn('SSE stream notice, fallback polling active', err);
+                        };
+                    } catch (e) {
+                        console.warn('EventSource init error, relying on polling', e);
                     }
-                    this.recalculateTotalSize();
                 },
 
                 recalculateTotalSize() {
@@ -1107,7 +1127,6 @@
                         const data = await res.json();
                         if (data.success) {
                             this.sites = this.sites.filter(s => s.id !== id);
-                            this.dismissTask(id);
                             this.recalculateTotalSize();
                         } else {
                             alert('Не удалось удалить сайт');
