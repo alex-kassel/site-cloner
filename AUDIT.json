@@ -4,10 +4,10 @@
     "package": "alex-kassel/site-cloner",
     "version": "1.0.0",
     "audit": {
-        "commit": "692b5d8b6ef728fa2a11e0d2ab70d6089a3fa222",
-        "tree_hash": "7d373cc6c05f00f17151dcfbecf95a0297726da7",
+        "commit": "8336cbbecbbb495fe50c1444867734540253ed79",
+        "tree_hash": "9f26089358d9677364b6911fa414b4fcec3dddaf",
         "branch": "main",
-        "timestamp": "2026-10-25T19:05:33+00:00",
+        "timestamp": "2026-10-25T20:58:30+00:00",
         "environment": {
             "php": "8.3.28",
             "laravel": "13.37.0",
@@ -20,42 +20,42 @@
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "packages/alex-kassel/site-cloner/composer.json is valid",
-            "duration_seconds": 0.293
+            "duration_seconds": 0.234
         },
         "pint": {
             "check": "pint",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "{\"tool\":\"pint\",\"result\":\"passed\"}",
-            "duration_seconds": 0.204
+            "duration_seconds": 0.198
         },
         "phpstan": {
             "check": "phpstan",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "{\"tool\":\"phpstan\",\"result\":\"passed\",\"errors\":0}",
-            "duration_seconds": 1.518
+            "duration_seconds": 1.489
         },
         "tests": {
             "check": "tests",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "{\"tool\":\"phpunit\",\"result\":\"passed\",\"tests\":17,\"passed\":17,\"assertions\":61,\"duration_ms\":10}",
-            "duration_seconds": 0.239
+            "duration_seconds": 0.219
         },
         "isolated": {
             "check": "isolated",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
-            "output": "PHPUnit 11.5.57 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.28\nConfiguration: /private/var/folders/px/ykxw69555z9_pgw_yyv14fxh0000gn/T/wdt-isolated-c904a547f6ba40792447017e/project/phpunit.xml\n\n.................                                                 17 / 17 (100%)\n\nTime: 00:00.011, Memory: 10.00 MB\n\nOK (17 tests, 61 assertions)\n",
-            "duration_seconds": 18.04
+            "output": "PHPUnit 11.5.57 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.3.28\nConfiguration: /private/var/folders/px/ykxw69555z9_pgw_yyv14fxh0000gn/T/wdt-isolated-ce7d3904ab8cf9a16ea19f48/project/phpunit.xml\n\n.................                                                 17 / 17 (100%)\n\nTime: 00:00.011, Memory: 10.00 MB\n\nOK (17 tests, 61 assertions)\n",
+            "duration_seconds": 35.622
         },
         "git_cleanliness": {
             "check": "git_cleanliness",
             "package": "alex-kassel/site-cloner",
             "status": "passed",
             "output": "Git repository is clean. No uncommitted changes.",
-            "duration_seconds": 0.022
+            "duration_seconds": 0.018
         },
         "readme": {
             "check": "readme",
@@ -73,5 +73,5 @@
         }
     },
     "verdict": "PASSED",
-    "fingerprint": "sha256:567c59e9a91cf2a7ccdcc9a24b7d8d46b634a977e228792b1a173ba8e77e333a"
+    "fingerprint": "sha256:7db2e07a6cede8e18c86bf69b8125d2cd226b833da7f1cda5744d231f74437d6"
 }
