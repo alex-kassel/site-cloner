@@ -31,9 +31,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Absolute or relative path where cloned sites and manifests will be stored.
+    | When null, defaults to storage_path('app/site-cloner/sites').
     |
     */
-    'storage_path' => storage_path('app/site-cloner/sites'),
+    'storage_path' => env('SITE_CLONER_STORAGE_PATH', null),
 
     /*
     |--------------------------------------------------------------------------

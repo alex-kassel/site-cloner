@@ -506,6 +506,12 @@ JS;
 
     private function trans(string $key, string $default): string
     {
-        return function_exists('app') && app()->bound('translator') ? __($key) : $default;
+        if (function_exists('app') && app()->bound('translator')) {
+            $translated = __($key);
+
+            return is_string($translated) ? $translated : $default;
+        }
+
+        return $default;
     }
 }

@@ -22,7 +22,7 @@ class SiteClonerServiceProvider extends ServiceProvider
 
         $this->app->singleton(SiteStorage::class, function ($app): SiteStorage {
             return new SiteStorage(
-                basePath: (string) config('site-cloner.storage_path', storage_path('app/site-cloner/sites'))
+                basePath: (string) (config('site-cloner.storage_path') ?: storage_path('app/site-cloner/sites'))
             );
         });
 

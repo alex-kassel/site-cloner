@@ -62,7 +62,10 @@ final class DashboardController
 
     private function applyLocale(Request $request): void
     {
-        $locale = (string) $request->query('lang', session('site_cloner_locale', 'en'));
+        $queryLocale = $request->query('lang');
+        $sessionLocale = session('site_cloner_locale', 'en');
+        $locale = is_string($queryLocale) ? $queryLocale : (is_string($sessionLocale) ? $sessionLocale : 'en');
+
         if (in_array($locale, ['en', 'de', 'ru'], true)) {
             session(['site_cloner_locale' => $locale]);
             app()->setLocale($locale);

@@ -82,18 +82,19 @@ final class ResourceInspector
             $downloadedDomains = $this->filesystem->directories($externalDir);
             foreach ($downloadedDomains as $domainDir) {
                 $domainName = basename($domainDir);
+                $statusDownloaded = $this->trans('site-cloner::api.resource_types.downloaded_label', 'Downloaded locally (offline)');
                 if (! isset($domainMap[$domainName])) {
                     $domainMap[$domainName] = [
                         'domain' => $domainName,
                         'status' => 'downloaded',
-                        'status_label' => __('Downloaded locally (offline)'),
+                        'status_label' => $statusDownloaded,
                         'count' => 0,
                         'types' => [],
                         'urls' => [],
                     ];
                 } else {
                     $domainMap[$domainName]['status'] = 'downloaded';
-                    $domainMap[$domainName]['status_label'] = __('Downloaded locally (offline)');
+                    $domainMap[$domainName]['status_label'] = $statusDownloaded;
                 }
 
                 // Count files in domain directory
@@ -279,6 +280,12 @@ final class ResourceInspector
 
     private function trans(string $key, string $default): string
     {
-        return function_exists('app') && app()->bound('translator') ? __($key) : $default;
+        if (function_exists('app') && app()->bound('translator')) {
+            $translated = __($key);
+
+            return is_string($translated) ? $translated : $default;
+        }
+
+        return $default;
     }
 }
